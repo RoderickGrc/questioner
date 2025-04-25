@@ -1,0 +1,317 @@
+/* styles.css */
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Alinea al inicio para ver los botones superiores */
+    min-height: 100vh;
+}
+
+#progress-buttons {
+    position: fixed; /* O absolute si prefieres */
+    top: 10px;
+    right: 10px;
+    z-index: 100; /* Asegura que esté encima de otros elementos */
+    background-color: rgba(255, 255, 255, 0.8); /* Fondo semitransparente */
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#progress-buttons button {
+    margin-left: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+#progress-buttons button:hover {
+    background-color: #0056b3;
+}
+
+
+.quiz-container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 700px; /* Ancho máximo para legibilidad */
+    margin-top: 60px; /* Espacio para los botones de progreso */
+    border: 3px solid transparent; /* Borde inicial transparente */
+    transition: border-color 0.3s ease-in-out; /* Transición suave para el borde */
+}
+
+/* NUEVO: Estilos para el borde del contenedor según la respuesta */
+.quiz-container.correct-answer-border {
+    border-color: #28a745; /* Verde */
+}
+.quiz-container.incorrect-answer-border {
+    border-color: #dc3545; /* Rojo */
+}
+
+
+#quiz h2 {
+    margin-top: 0;
+    color: #333;
+    margin-bottom: 25px; /* Más espacio después de la pregunta */
+    font-size: 1.4em; /* Tamaño de fuente ligeramente mayor */
+    line-height: 1.4; /* Mejor interlineado */
+}
+
+.reps-remaining,
+.questions-remaining {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.option {
+    display: flex; /* Usar flexbox para alinear número y texto */
+    align-items: center; /* Centrar verticalmente */
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.option:hover {
+    background-color: #e9e9e9;
+    border-color: #ccc;
+}
+
+.option.selected {
+    background-color: #d1e7fd; /* Azul claro para selección */
+    border-color: #7abaff;
+}
+
+.option.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-color: #eee;
+}
+
+.option.hidden {
+    display: none; /* Oculta las opciones originales en la pantalla de explicación */
+}
+
+
+.key-indicator {
+    font-weight: bold;
+    margin-right: 12px;
+    min-width: 20px; /* Ancho mínimo para que se alinien */
+    text-align: center;
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.key-indicator.space {
+    font-family: monospace; /* Para que el símbolo de espacio se vea mejor */
+    font-size: 1.1em;
+     padding: 2px 5px;
+}
+
+.option-text {
+    flex-grow: 1; /* Para que el texto ocupe el espacio restante */
+}
+
+.action-buttons-container {
+    margin-top: 20px; /* Espacio antes de los botones */
+}
+
+/* Estilos para botones de acción (Confirmar, Saltar, Siguiente) */
+.confirm-button,
+.skip-button,
+.next-button {
+    display: inline-flex; /* Para alinear icono y texto */
+    align-items: center;
+    padding: 12px 20px;
+    /* margin-top: 20px; No necesario si está en el contenedor */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+    margin-right: 10px; /* Espacio entre botones si hay varios */
+}
+/* Asegurar que el último botón no tenga margen derecho extra */
+.confirm-button:last-child,
+.skip-button:last-child,
+.next-button:last-child {
+    margin-right: 0;
+}
+
+
+.confirm-button {
+    background-color: #28a745; /* Verde */
+    color: white;
+}
+.confirm-button:hover {
+    background-color: #218838;
+}
+.confirm-button:disabled {
+     background-color: #a0d1a9;
+     cursor: not-allowed;
+}
+
+/* Estilo para el botón Saltar */
+.skip-button {
+    background-color: #ffc107; /* Amarillo */
+    color: #333;
+}
+.skip-button:hover {
+    background-color: #e0a800;
+}
+.skip-button:disabled {
+    background-color: #ffe082;
+    cursor: not-allowed;
+}
+
+
+.next-button {
+    background-color: #007bff; /* Azul */
+    color: white;
+     margin-top: 20px; /* Añadir margen superior al botón Siguiente */
+}
+.next-button:hover {
+    background-color: #0056b3;
+}
+
+
+.button-text {
+    margin-left: 8px; /* Espacio entre el indicador de tecla y el texto */
+}
+
+
+/* Estilos para la fase de explicación/resultado */
+.correct-answer-info,
+.context-info,
+.selected-answers-display,
+.missed-correct-answers-display { /* Añadido missed */
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    line-height: 1.5;
+}
+
+.correct-answer-info {
+    background-color: #dff0d8; /* Verde claro */
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.context-info {
+    background-color: #f8f9fa; /* Gris muy claro */
+    border: 1px solid #dee2e6;
+    color: #495057;
+}
+
+.selected-answers-display,
+.missed-correct-answers-display { /* Añadido missed */
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    color: #495057;
+}
+.selected-answers-display p,
+.missed-correct-answers-display p { /* Añadido missed */
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Base para todas las opciones mostradas en la explicación */
+.selected-option-display,
+.unselected-correct-option { /* Añadido unselected */
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    display: inline-block; /* Para que estén uno al lado del otro si caben */
+    margin-right: 5px;
+    border: 1px solid transparent; /* Borde base */
+}
+
+/* Estilo específico para selecciones del usuario */
+.correct-selection {
+    background-color: #c3e6cb; /* Verde más claro */
+    color: #155724;
+    border-color: #b1dfbb;
+}
+.incorrect-selection {
+    background-color: #f5c6cb; /* Rojo claro */
+    color: #721c24;
+    border-color: #f1b0b7;
+    text-decoration: line-through; /* Tachar incorrectas */
+}
+
+/* NUEVO: Estilo para correctas NO seleccionadas */
+.unselected-correct-option {
+    background-color: #e6ffed; /* Verde muy pálido */
+    color: #1c7430; /* Verde más oscuro */
+    border-color: #a3d3ab; /* Borde verde */
+}
+.missed-correct-answers-display { /* Contenedor específico si se usa */
+    background-color: #f0fff4;
+    border-color: #c3e6cb;
+}
+
+
+/* Mensajes de estado */
+.status-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 101; /* Por encima de los botones de progreso */
+    display: none; /* Oculto por defecto */
+    font-size: 0.95em;
+    text-align: center;
+}
+.status-message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+.status-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.status-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.completed-message {
+    color: #28a745;
+    text-align: center;
+    font-size: 1.8em;
+}
+
+.multi-select-info {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 0.95em;
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+}
