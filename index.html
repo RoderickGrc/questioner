@@ -21,6 +21,7 @@
         <input type="file" id="csv-file-input" accept=".csv" style="display:none">
 
         <button id="reset-progress-button">Reiniciar Progreso</button>
+        <button id="config-button">Configuración</button>
     </div>
     <div class="quiz-container">
         <div id="quiz"></div>
@@ -29,5 +30,40 @@
     </div>
     <!-- Cargar script.js después de Papa Parse -->
     <script src="script.js"></script>
-</body>
+    <!-- Modal de Configuración -->
+    <div id="config-modal-overlay" class="modal-overlay hidden">
+        <div id="config-modal" class="modal-content">
+            <button id="close-modal-x" class="close-modal-x" aria-label="Cerrar modal">&times;</button>
+            <h2>Configuración del Quiz</h2>
+
+            <div class="config-group">
+                <p class="config-group-title">Repeticiones de Preguntas</p>
+                <div class="config-option">
+                    <label for="config-initial-reps">Repeticiones iniciales por pregunta:</label>
+                    <input type="number" id="config-initial-reps" min="1" value="3" step="1">
+                    <small>Cambiar esto requiere reiniciar el progreso actual.</small>
+                </div>
+                <div class="config-option">
+                    <label for="config-reps-on-error">Aumento de repeticiones por error:</label>
+                    <input type="number" id="config-reps-on-error" min="0" value="1" step="1">
+                </div>
+            </div>
+
+            <!-- Aquí se pueden añadir más grupos de configuración en el futuro -->
+            <!-- 
+            <div class="config-group">
+                <p class="config-group-title">Comportamiento</p>
+                <div class="config-option checkbox-option">
+                    <input type="checkbox" id="config-show-explanation-always">
+                    <label for="config-show-explanation-always">Mostrar explicación siempre (no solo en error)</label>
+                </div>
+            </div>
+            -->
+
+            <div class="modal-actions">
+                <button id="save-config-button" class="button-primary">Guardar Cambios</button>
+                <button id="close-config-modal-button" class="button-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
 </html>

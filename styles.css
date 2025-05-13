@@ -27,7 +27,7 @@ body {
     gap: 10px;
     padding: 12px 15px;
     background-color: #343a40; /* Darker menu background */
-    color: white;
+    color: black;
     width: 100%;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     /* position: sticky; top: 0; z-index: 100; */ /* Opción para menú pegajoso */
@@ -42,6 +42,9 @@ body {
     border-radius: 4px;
     font-size: 0.9rem; /* Relativo al font-size de html */
     transition: background-color 0.2s ease;
+    flex-grow: 0; /* No crecer para llenar espacio por defecto */
+    flex-shrink: 0; /* No encogerse por defecto */
+    flex-basis: auto; /* Tamaño basado en contenido */
 }
 
 #progress-buttons button:hover {
@@ -94,6 +97,7 @@ body {
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
     font-size: 1rem; /* Buen tamaño para opciones */
+    color: #333; /* Asegurar que el texto de la opción sea oscuro */
 }
 
 .option:hover {
@@ -334,4 +338,197 @@ body {
         font-size: 0.85rem;
         padding: 0.6rem 1rem;
     }
+}
+
+/* --- Estilos del Modal de Configuración --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.modal-overlay:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease-out;
+}
+
+.modal-overlay:not(.hidden) .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    color: #333;
+    text-align: center;
+}
+
+.close-modal-x {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2rem;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.close-modal-x:hover {
+    color: #777;
+}
+
+.config-group {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+.config-group:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+.config-group-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    color: #007bff;
+}
+
+.config-option {
+    margin-bottom: 1rem;
+}
+.config-option:last-child {
+    margin-bottom: 0;
+}
+
+.config-option label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.config-option input[type="number"],
+.config-option input[type="text"],
+.config-option select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+.config-option input[type="number"] {
+    width: auto; /* Ajustar para números */
+    min-width: 80px;
+    max-width: 120px;
+}
+
+.config-option small {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.config-option.checkbox-option {
+    display: flex;
+    align-items: center;
+}
+.config-option.checkbox-option input[type="checkbox"] {
+    margin-right: 0.5rem;
+    width: auto;
+    height: 1.2em; /* Ajustar tamaño del checkbox */
+    width: 1.2em;
+}
+.config-option.checkbox-option label {
+    margin-bottom: 0;
+    font-weight: normal;
+}
+
+.modal-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end; /* Alinea botones a la derecha */
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.modal-actions .button-primary,
+.modal-actions .button-secondary {
+    padding: 0.7em 1.2em;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.modal-actions .button-primary {
+    background-color: #007bff;
+    color: white;
+}
+.modal-actions .button-primary:hover {
+    background-color: #0056b3;
+}
+
+.modal-actions .button-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+.modal-actions .button-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Responsividad del modal */
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 1.5rem;
+        width: 95%;
+        max-height: 90vh; /* Evitar que sea más alto que la pantalla */
+        overflow-y: auto; /* Permitir scroll si el contenido es mucho */
+    }
+    .modal-content h2 {
+        font-size: 1.3rem;
+    }
+    .modal-actions {
+        flex-direction: column; /* Botones apilados en móviles */
+    }
+    .modal-actions .button-primary,
+    .modal-actions .button-secondary {
+        width: 100%; /* Botones ocupan todo el ancho */
+    }
+    .config-option input[type="number"] {
+        width: 100%; /* Inputs numéricos también ocupan todo el ancho */
+        max-width: none;
+    }
+}
+
+.hidden { /* Ya debería existir, pero asegurar que esté y tenga !important si es necesario */
+    display: none !important;
 }

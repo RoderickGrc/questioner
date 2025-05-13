@@ -1,6 +1,19 @@
 // script.js
 
-let questions = [];
+// --- Configuración del Quiz (valores por defecto) ---
+let configRepetitionsOnError = 1;
+let configInitialRepetitions = 3;
+const QUIZ_CONFIG_KEY = 'interactiveQuizConfig'; // Clave para localStorage
+
+// Referencias a elementos del DOM para el modal de configuración
+let configButton = null;
+let configModalOverlay = null;
+let configModal = null;
+let configRepsOnErrorInput = null;
+let configInitialRepsInput = null;
+let saveConfigButton = null;
+let closeModalButton = null;
+let closeModalXButton = null;
 let currentQuestionIndex = null;
 let questionQueue = [];
 let questionStats = {};
@@ -17,32 +30,58 @@ let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 // --- Inicialización ---
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Obtener referencias a elementos clave del DOM
+    // Referencias a elementos clave del DOM
     quizDiv = document.getElementById('quiz');
     statusMessageDiv = document.getElementById('status-message');
     fileInput = document.getElementById('file-input');
     csvFileInput = document.getElementById('csv-file-input');
-    quizContainerDiv = document.querySelector('.quiz-container'); // <-- NUEVO: Obtener contenedor
+    quizContainerDiv = document.querySelector('.quiz-container');
 
-    if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv) { // <-- NUEVO: Añadir chequeo para quizContainerDiv
-        console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status-message, file-input, csv-file-input, quiz-container).");
-        if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales.</p>";
+    // Referencias para el modal de configuración
+    configButton = document.getElementById('config-button');
+    configModalOverlay = document.getElementById('config-modal-overlay');
+    configModal = document.getElementById('config-modal');
+    configRepsOnErrorInput = document.getElementById('config-reps-on-error');
+    configInitialRepsInput = document.getElementById('config-initial-reps');
+    saveConfigButton = document.getElementById('save-config-button');
+    closeModalButton = document.getElementById('close-config-modal-button');
+    closeModalXButton = document.getElementById('close-modal-x');
+
+    if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
+        !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
+        !configInitialRepsInput || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
+        if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
     }
 
-    setupEventListeners(); // Configurar listeners de botones
+    loadQuizConfig(); // Cargar configuración guardada
+    setupEventListeners(); // Configurar listeners de botones generales y del modal
+
     loadInitialCSV('questions.csv'); // Cargar el CSV inicial
 });
 
 function setupEventListeners() {
+    // Botones principales
     document.getElementById('save-progress')?.addEventListener('click', saveProgressToFile);
     document.getElementById('load-progress')?.addEventListener('click', loadProgressFromFile);
     document.getElementById('load-csv-button')?.addEventListener('click', () => csvFileInput.click());
     document.getElementById('reset-progress-button')?.addEventListener('click', resetCurrentProgress);
+    configButton?.addEventListener('click', openConfigModal);
 
-    // Listeners para los inputs de archivo
+    // Inputs de archivo
     fileInput.addEventListener('change', handleProgressFileSelect);
     csvFileInput.addEventListener('change', handleCsvFileSelect);
+
+    // Botones y overlay del modal de configuración
+    saveConfigButton?.addEventListener('click', handleSaveConfig);
+    closeModalButton?.addEventListener('click', closeConfigModal);
+    closeModalXButton?.addEventListener('click', closeConfigModal);
+    configModalOverlay?.addEventListener('click', function(event) {
+        if (event.target === configModalOverlay) { // Solo cerrar si se hace clic en el overlay, no en el contenido del modal
+            closeConfigModal();
+        }
+    });
 }
 
 // --- Carga de Datos (CSV y Estado) ---
@@ -143,7 +182,7 @@ function initializeQuiz() {
     questions.forEach((_, index) => {
         const idxStr = index.toString();
         if (!questionStats[idxStr] || typeof questionStats[idxStr].repetitionsRemaining !== 'number') {
-            questionStats[idxStr] = { repetitionsRemaining: 3, lastAskedAt: null };
+            questionStats[idxStr] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
             statsNeedInitialization = true;
         }
     });
@@ -420,7 +459,7 @@ function updateStats(questionIndex, isCorrect) {
     if (isCorrect) {
         questionStats[questionIndex].repetitionsRemaining = Math.max(0, questionStats[questionIndex].repetitionsRemaining - 1);
     } else {
-        questionStats[questionIndex].repetitionsRemaining += 1;
+        questionStats[questionIndex].repetitionsRemaining += configRepetitionsOnError;
     }
     questionStats[questionIndex].lastAskedAt = Date.now();
 }
@@ -860,7 +899,7 @@ function resetCurrentProgress() {
 
         questionStats = {};
         questions.forEach((_, index) => {
-            questionStats[index] = { repetitionsRemaining: 3, lastAskedAt: null };
+            questionStats[index] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
         });
 
         questionQueue = [];
@@ -870,4 +909,98 @@ function resetCurrentProgress() {
         showNextQuestion();
         showStatusMessage("Progreso reiniciado.", "success");
     }
+}
+// --- Funciones del Modal de Configuración ---
+
+function populateConfigModal() {
+    if (configRepsOnErrorInput) configRepsOnErrorInput.value = configRepetitionsOnError;
+    if (configInitialRepsInput) configInitialRepsInput.value = configInitialRepetitions;
+}
+
+function openConfigModal() {
+    populateConfigModal(); // Asegurar que los valores estén actualizados al abrir
+    if (configModalOverlay) configModalOverlay.classList.remove('hidden');
+}
+
+function closeConfigModal() {
+    if (configModalOverlay) configModalOverlay.classList.add('hidden');
+}
+
+function loadQuizConfig() {
+    const savedConfigJSON = localStorage.getItem(QUIZ_CONFIG_KEY);
+    if (savedConfigJSON) {
+        try {
+            const savedConfig = JSON.parse(savedConfigJSON);
+            if (typeof savedConfig.repetitionsOnError === 'number') {
+                configRepetitionsOnError = savedConfig.repetitionsOnError;
+            }
+            if (typeof savedConfig.initialRepetitions === 'number') {
+                configInitialRepetitions = savedConfig.initialRepetitions;
+            }
+            console.log("Configuración cargada desde localStorage:", savedConfig);
+        } catch (e) {
+            console.error("Error al parsear configuración desde localStorage:", e);
+        }
+    }
+    // Llenar el modal después de cargar, por si no se abre inmediatamente
+    populateConfigModal();
+}
+
+function saveQuizConfig() {
+    const currentConfig = {
+        repetitionsOnError: configRepetitionsOnError,
+        initialRepetitions: configInitialRepetitions
+    };
+    try {
+        localStorage.setItem(QUIZ_CONFIG_KEY, JSON.stringify(currentConfig));
+        console.log("Configuración guardada en localStorage:", currentConfig);
+    } catch (e) {
+        console.error("Error al guardar configuración en localStorage:", e);
+    }
+}
+
+function handleSaveConfig() {
+    const newRepsOnError = parseInt(configRepsOnErrorInput.value, 10);
+    const newInitialReps = parseInt(configInitialRepsInput.value, 10);
+
+    let configChanged = false;
+    let initialRepsChanged = false;
+
+    if (!isNaN(newRepsOnError) && newRepsOnError >= 0 && newRepsOnError !== configRepetitionsOnError) {
+        configRepetitionsOnError = newRepsOnError;
+        configChanged = true;
+    }
+
+    if (!isNaN(newInitialReps) && newInitialReps >= 1 && newInitialReps !== configInitialRepetitions) {
+        initialRepsChanged = true;
+        // No actualizamos configInitialRepetitions aquí todavía, esperamos confirmación si es necesario
+    }
+
+    if (initialRepsChanged) {
+        if (confirm(`Cambiar las repeticiones iniciales a ${newInitialReps} requiere reiniciar el progreso actual para todas las preguntas. ¿Deseas continuar y reiniciar?`)) {
+            configInitialRepetitions = newInitialReps; // Ahora sí actualizamos
+            configChanged = true; // Marcamos que hubo un cambio que guardar
+            saveQuizConfig();
+            resetCurrentProgress(); // resetCurrentProgress usará el nuevo configInitialRepetitions
+            showStatusMessage("Configuración guardada y progreso reiniciado.", "success", 3000);
+        } else {
+            // El usuario canceló el reinicio, así que no cambiamos initialReps.
+            // Pero sí guardamos si repsOnError cambió.
+            if (configRepetitionsOnError !== (localStorage.getItem(QUIZ_CONFIG_KEY) ? JSON.parse(localStorage.getItem(QUIZ_CONFIG_KEY)).repetitionsOnError : 1)) {
+                 saveQuizConfig(); // Guardar solo si repsOnError cambió y es diferente a lo guardado
+                 showStatusMessage("Configuración de 'aumento por error' guardada. Las repeticiones iniciales no se modificaron.", "info", 4000);
+            } else {
+                showStatusMessage("No se realizaron cambios en la configuración.", "info", 3000);
+            }
+            // Revertir el input de repeticiones iniciales a su valor original
+            configInitialRepsInput.value = configInitialRepetitions;
+        }
+    } else if (configChanged) { // Solo cambió repsOnError o no cambió nada relevante para reinicio
+        saveQuizConfig();
+        showStatusMessage("Configuración guardada.", "success", 3000);
+    } else {
+        showStatusMessage("No se detectaron cambios en la configuración.", "info", 3000);
+    }
+
+    closeConfigModal();
 }
