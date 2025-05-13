@@ -1,88 +1,99 @@
 /* styles.css */
-body {
-    font-family: sans-serif;
-    background-color: #f4f4f4;
+html {
+    box-sizing: border-box;
+    font-size: 16px; /* Base font size for rem units */
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
     margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Alinea al inicio para ver los botones superiores */
-    min-height: 100vh;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #f4f4f4;
+    line-height: 1.6;
+    color: #333;
+    display: flex; /* Para permitir que el quiz-container crezca */
+    flex-direction: column; /* Apila el menú y el contenedor del quiz */
+    min-height: 100vh; /* Asegura que el cuerpo ocupe al menos toda la altura de la vista */
 }
 
 #progress-buttons {
-    position: fixed; /* O absolute si prefieres */
-    top: 10px;
-    right: 10px;
-    z-index: 100; /* Asegura que esté encima de otros elementos */
-    background-color: rgba(255, 255, 255, 0.8); /* Fondo semitransparente */
-    padding: 5px;
-    border-radius: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background-color: #343a40; /* Darker menu background */
+    color: white;
+    width: 100%;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* position: sticky; top: 0; z-index: 100; */ /* Opción para menú pegajoso */
 }
 
 #progress-buttons button {
-    margin-left: 5px;
-    padding: 8px 12px;
+    padding: 0.6em 1em;
     cursor: pointer;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.9rem; /* Relativo al font-size de html */
+    transition: background-color 0.2s ease;
 }
 
 #progress-buttons button:hover {
     background-color: #0056b3;
 }
 
-
 .quiz-container {
     background-color: #fff;
-    padding: 30px;
+    padding: 1.5rem; /* Usar rem para padding */
     border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.07);
     width: 90%;
-    max-width: 700px; /* Ancho máximo para legibilidad */
-    margin-top: 60px; /* Espacio para los botones de progreso */
-    border: 3px solid transparent; /* Borde inicial transparente */
-    transition: border-color 0.3s ease-in-out; /* Transición suave para el borde */
+    max-width: 700px;
+    margin: 1.5rem auto; /* Margen superior/inferior y centrado */
+    flex-grow: 1; /* Permite que este contenedor ocupe el espacio disponible */
+    border: 3px solid transparent;
+    transition: border-color 0.3s ease-in-out;
 }
 
-/* NUEVO: Estilos para el borde del contenedor según la respuesta */
 .quiz-container.correct-answer-border {
-    border-color: #28a745; /* Verde */
+    border-color: #28a745;
 }
 .quiz-container.incorrect-answer-border {
-    border-color: #dc3545; /* Rojo */
+    border-color: #dc3545;
 }
 
-
-#quiz h2 {
+#quiz h2 { /* Pregunta */
     margin-top: 0;
     color: #333;
-    margin-bottom: 25px; /* Más espacio después de la pregunta */
-    font-size: 1.4em; /* Tamaño de fuente ligeramente mayor */
-    line-height: 1.4; /* Mejor interlineado */
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    line-height: 1.4;
 }
 
 .reps-remaining,
 .questions-remaining {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 0.75rem;
 }
 
 .option {
-    display: flex; /* Usar flexbox para alinear número y texto */
-    align-items: center; /* Centrar verticalmente */
+    display: flex;
+    align-items: center;
     background-color: #f9f9f9;
     border: 1px solid #ddd;
-    padding: 12px 15px;
-    margin-bottom: 10px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.75rem;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-size: 1rem; /* Buen tamaño para opciones */
 }
 
 .option:hover {
@@ -91,227 +102,236 @@ body {
 }
 
 .option.selected {
-    background-color: #d1e7fd; /* Azul claro para selección */
+    background-color: #d1e7fd;
     border-color: #7abaff;
 }
 
 .option.disabled {
     cursor: not-allowed;
     opacity: 0.7;
-    background-color: #eee;
+    background-color: #eee !important;
+    border-color: #ddd !important;
 }
 
 .option.hidden {
-    display: none; /* Oculta las opciones originales en la pantalla de explicación */
+    display: none !important;
 }
-
 
 .key-indicator {
     font-weight: bold;
-    margin-right: 12px;
-    min-width: 20px; /* Ancho mínimo para que se alinien */
+    margin-right: 0.8rem;
+    min-width: 1.5em; /* Basado en font-size del indicador */
     text-align: center;
     background-color: #e0e0e0;
     color: #333;
-    padding: 3px 6px;
+    padding: 0.2em 0.5em;
     border-radius: 3px;
-    font-size: 0.9em;
+    font-size: 0.85rem;
 }
 
 .key-indicator.space {
-    font-family: monospace; /* Para que el símbolo de espacio se vea mejor */
-    font-size: 1.1em;
-     padding: 2px 5px;
+    font-family: monospace;
+    font-size: 1rem;
 }
 
 .option-text {
-    flex-grow: 1; /* Para que el texto ocupe el espacio restante */
+    flex-grow: 1;
 }
 
 .action-buttons-container {
-    margin-top: 20px; /* Espacio antes de los botones */
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
 }
 
-/* Estilos para botones de acción (Confirmar, Saltar, Siguiente) */
+.action-buttons-container.hidden {
+    display: none !important;
+}
+
 .confirm-button,
-.skip-button,
-.next-button {
-    display: inline-flex; /* Para alinear icono y texto */
+.skip-button {
+    display: inline-flex;
     align-items: center;
-    padding: 12px 20px;
-    /* margin-top: 20px; No necesario si está en el contenedor */
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 1rem;
     transition: background-color 0.2s ease;
-    margin-right: 10px; /* Espacio entre botones si hay varios */
-}
-/* Asegurar que el último botón no tenga margen derecho extra */
-.confirm-button:last-child,
-.skip-button:last-child,
-.next-button:last-child {
-    margin-right: 0;
+    flex-grow: 1;
+    flex-basis: calc(50% - 0.4rem); /* Dos botones por fila si caben */
 }
 
+.confirm-button { background-color: #28a745; color: white; }
+.confirm-button:hover { background-color: #218838; }
+.confirm-button:disabled { background-color: #a0d1a9; cursor: not-allowed; }
 
-.confirm-button {
-    background-color: #28a745; /* Verde */
-    color: white;
-}
-.confirm-button:hover {
-    background-color: #218838;
-}
-.confirm-button:disabled {
-     background-color: #a0d1a9;
-     cursor: not-allowed;
-}
-
-/* Estilo para el botón Saltar */
-.skip-button {
-    background-color: #ffc107; /* Amarillo */
-    color: #333;
-}
-.skip-button:hover {
-    background-color: #e0a800;
-}
-.skip-button:disabled {
-    background-color: #ffe082;
-    cursor: not-allowed;
-}
-
+.skip-button { background-color: #ffc107; color: #333; }
+.skip-button:hover { background-color: #e0a800; }
+.skip-button:disabled { background-color: #ffe082; cursor: not-allowed; }
 
 .next-button {
-    background-color: #007bff; /* Azul */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+    background-color: #007bff;
     color: white;
-     margin-top: 20px; /* Añadir margen superior al botón Siguiente */
+    margin-top: 1rem;
+    width: 100%;
 }
-.next-button:hover {
-    background-color: #0056b3;
-}
-
+.next-button:hover { background-color: #0056b3; }
 
 .button-text {
-    margin-left: 8px; /* Espacio entre el indicador de tecla y el texto */
+    margin-left: 0.5rem;
 }
 
-
-/* Estilos para la fase de explicación/resultado */
-.correct-answer-info,
+/* Fase de explicación/resultado */
+.correct-answer-info, /* No usado, pero mantenido */
 .context-info,
 .selected-answers-display,
-.missed-correct-answers-display { /* Añadido missed */
-    margin-top: 20px;
-    padding: 15px;
+.missed-correct-answers-display {
+    margin-top: 1.25rem;
+    padding: 1rem;
     border-radius: 5px;
     line-height: 1.5;
-}
-
-.correct-answer-info {
-    background-color: #dff0d8; /* Verde claro */
-    border: 1px solid #c3e6cb;
-    color: #155724;
+    font-size: 0.95rem;
 }
 
 .context-info {
-    background-color: #f8f9fa; /* Gris muy claro */
+    background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     color: #495057;
+    word-wrap: break-word;
 }
 
 .selected-answers-display,
-.missed-correct-answers-display { /* Añadido missed */
+.missed-correct-answers-display {
     background-color: #e9ecef;
     border: 1px solid #ced4da;
-    color: #495057;
 }
 .selected-answers-display p,
-.missed-correct-answers-display p { /* Añadido missed */
+.missed-correct-answers-display p {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 0.6rem;
     font-weight: bold;
 }
 
-/* Base para todas las opciones mostradas en la explicación */
 .selected-option-display,
-.unselected-correct-option { /* Añadido unselected */
-    padding: 5px 10px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    display: inline-block; /* Para que estén uno al lado del otro si caben */
-    margin-right: 5px;
-    border: 1px solid transparent; /* Borde base */
-}
-
-/* Estilo específico para selecciones del usuario */
-.correct-selection {
-    background-color: #c3e6cb; /* Verde más claro */
-    color: #155724;
-    border-color: #b1dfbb;
-}
-.incorrect-selection {
-    background-color: #f5c6cb; /* Rojo claro */
-    color: #721c24;
-    border-color: #f1b0b7;
-    text-decoration: line-through; /* Tachar incorrectas */
-}
-
-/* NUEVO: Estilo para correctas NO seleccionadas */
 .unselected-correct-option {
-    background-color: #e6ffed; /* Verde muy pálido */
-    color: #1c7430; /* Verde más oscuro */
-    border-color: #a3d3ab; /* Borde verde */
-}
-.missed-correct-answers-display { /* Contenedor específico si se usa */
-    background-color: #f0fff4;
-    border-color: #c3e6cb;
+    padding: 0.3rem 0.6rem;
+    margin-bottom: 0.3rem;
+    border-radius: 4px;
+    display: block; /* Para que cada una ocupe su línea */
+    margin-right: 0; /* No necesario si son display block */
+    border: 1px solid transparent;
 }
 
+.correct-selection { background-color: #c3e6cb; color: #155724; border-color: #b1dfbb; }
+.incorrect-selection { background-color: #f5c6cb; color: #721c24; border-color: #f1b0b7; text-decoration: line-through; }
+.unselected-correct-option { background-color: #e6ffed; color: #1c7430; border-color: #a3d3ab; }
+.missed-correct-answers-display { background-color: #f0fff4; border-color: #c3e6cb; }
 
-/* Mensajes de estado */
 .status-message {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 10px 20px;
+    padding: 0.75rem 1.25rem;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 101; /* Por encima de los botones de progreso */
-    display: none; /* Oculto por defecto */
-    font-size: 0.95em;
+    z-index: 101;
+    display: none;
+    font-size: 0.9rem;
     text-align: center;
+    max-width: 90%;
 }
-.status-message.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-}
-.status-message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-.status-message.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+.status-message.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+.status-message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.status-message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+.completed-message { color: #28a745; text-align: center; font-size: 1.6rem; }
+.multi-select-info { font-style: italic; color: #555; margin-bottom: 1rem; font-size: 0.9rem; }
+.error-message { color: #dc3545; font-weight: bold; }
+
+/* --- Media Queries para Responsividad --- */
+@media (max-width: 768px) { /* Tablets y móviles grandes en landscape */
+    html {
+        font-size: 15px; /* Ligeramente más pequeño si es necesario, o mantener 16px */
+    }
+    .quiz-container {
+        width: 95%;
+        padding: 1.25rem;
+        margin: 1.25rem auto;
+    }
+    #quiz h2 { font-size: 1.3rem; }
+    #progress-buttons button { font-size: 0.85rem; padding: 0.5em 0.8em; }
 }
 
-.completed-message {
-    color: #28a745;
-    text-align: center;
-    font-size: 1.8em;
-}
+@media (max-width: 480px) { /* Móviles en portrait */
+    html {
+        font-size: 14px; /* Aumentar ligeramente la base para móviles para que no sea tan pequeño */
+                         /* El valor original era 14px, si se sigue viendo pequeño, probar con 15px o 16px */
+    }
+    #progress-buttons {
+        padding: 10px 8px;
+        gap: 8px;
+    }
+    #progress-buttons button {
+        font-size: 0.85rem; /* Ajustar según necesidad */
+        padding: 0.5em 0.7em;
+        flex-grow: 1; /* Permite que los botones se expandan un poco */
+        flex-basis: calc(50% - 4px); /* Dos botones por línea */
+    }
 
-.multi-select-info {
-    font-style: italic;
-    color: #555;
-    margin-bottom: 15px;
-    font-size: 0.95em;
-}
+    .quiz-container {
+        width: 100%;
+        margin: 0; /* Sin margen lateral */
+        padding: 1rem;
+        border-radius: 0; /* Opcional: quitar bordes redondeados en pantalla completa */
+        box-shadow: none; /* Opcional */
+        border-left: none;
+        border-right: none;
+    }
 
-.error-message {
-    color: red;
-    font-weight: bold;
+    #quiz h2 {
+        font-size: 1.2rem; /* Tamaño de pregunta legible */
+        line-height: 1.35;
+        margin-bottom: 1rem;
+    }
+
+    .option {
+        padding: 0.9rem 0.75rem; /* Más área táctil */
+        font-size: 0.95rem; /* Texto de opción más grande */
+        margin-bottom: 0.6rem;
+    }
+    .key-indicator {
+        font-size: 0.8rem;
+        margin-right: 0.6rem;
+    }
+
+    .action-buttons-container {
+        flex-direction: column; /* Botones de acción apilados */
+    }
+    .confirm-button,
+    .skip-button {
+        width: 100%; /* Ocupan todo el ancho */
+        flex-basis: auto; /* Resetear flex-basis */
+        font-size: 0.95rem;
+    }
+    .next-button {
+        font-size: 0.95rem;
+    }
+
+    .status-message {
+        font-size: 0.85rem;
+        padding: 0.6rem 1rem;
+    }
 }
