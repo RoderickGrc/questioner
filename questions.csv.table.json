@@ -1,0 +1,91 @@
+{
+  "columns": [
+    {
+      "minWidth": 40,
+      "download": false,
+      "formatter": "rowSelection",
+      "titleFormatter": "rowSelection",
+      "resizable": true,
+      "headerSort": false,
+      "width": 51
+    },
+    {
+      "field": "Pregunta",
+      "title": "Pregunta",
+      "width": 112,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción correcta 1",
+      "title": "Opción correcta 1",
+      "width": 166,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción Correcta 2",
+      "title": "Opción Correcta 2",
+      "width": 168,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción Correcta 3",
+      "title": "Opción Correcta 3",
+      "width": 168,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción Incorrecta 1",
+      "title": "Opción Incorrecta 1",
+      "width": 177,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción Incorrecta 2",
+      "title": "Opción Incorrecta 2",
+      "width": 177,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Opción Incorrecta 3",
+      "title": "Opción Incorrecta 3",
+      "width": 177,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    },
+    {
+      "field": "Explicación",
+      "title": "Explicación",
+      "width": 124,
+      "minWidth": 40,
+      "resizable": true,
+      "sorter": "string",
+      "headerSort": true
+    }
+  ],
+  "sort": [
+    {
+      "column": "Pregunta",
+      "dir": "desc"
+    }
+  ]
+}
