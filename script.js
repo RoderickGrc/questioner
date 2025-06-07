@@ -11,6 +11,7 @@ let configModalOverlay = null;
 let configModal = null;
 let configRepsOnErrorInput = null;
 let configInitialRepsInput = null;
+let configThemeSelect = null;
 let saveConfigButton = null;
 let closeModalButton = null;
 let closeModalXButton = null;
@@ -36,6 +37,8 @@ let avgTimePerRep = 30; // EMA initial estimate (seconds per repetition)
 const EMA_N = 20;
 const EMA_ALPHA = 2 / (EMA_N + 1);
 
+let themeMode = 'light';
+
 // --- Inicialización ---
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -55,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     configModal = document.getElementById('config-modal');
     configRepsOnErrorInput = document.getElementById('config-reps-on-error');
     configInitialRepsInput = document.getElementById('config-initial-reps');
+    configThemeSelect = document.getElementById('config-theme-select');
     saveConfigButton = document.getElementById('save-config-button');
     closeModalButton = document.getElementById('close-config-modal-button');
     closeModalXButton = document.getElementById('close-modal-x');
@@ -62,13 +66,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
     }
 
     loadQuizConfig(); // Cargar configuración guardada
+    applyTheme(themeMode); // Aplicar el tema al iniciar
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
     loadInitialCSV('questions.csv'); // Cargar el CSV inicial
@@ -1226,6 +1231,7 @@ function resetCurrentProgress() {
 function populateConfigModal() {
     if (configRepsOnErrorInput) configRepsOnErrorInput.value = configRepetitionsOnError;
     if (configInitialRepsInput) configInitialRepsInput.value = configInitialRepetitions;
+    if (configThemeSelect) configThemeSelect.value = themeMode;
 }
 
 function openConfigModal() {
@@ -1248,6 +1254,9 @@ function loadQuizConfig() {
             if (typeof savedConfig.initialRepetitions === 'number') {
                 configInitialRepetitions = savedConfig.initialRepetitions;
             }
+            if (savedConfig.themeMode === 'dark' || savedConfig.themeMode === 'light') {
+                themeMode = savedConfig.themeMode;
+            }
             console.log("Configuración cargada desde localStorage:", savedConfig);
         } catch (e) {
             console.error("Error al parsear configuración desde localStorage:", e);
@@ -1260,7 +1269,8 @@ function loadQuizConfig() {
 function saveQuizConfig() {
     const currentConfig = {
         repetitionsOnError: configRepetitionsOnError,
-        initialRepetitions: configInitialRepetitions
+        initialRepetitions: configInitialRepetitions,
+        themeMode: themeMode
     };
     try {
         localStorage.setItem(QUIZ_CONFIG_KEY, JSON.stringify(currentConfig));
@@ -1273,6 +1283,7 @@ function saveQuizConfig() {
 function handleSaveConfig() {
     const newRepsOnError = parseInt(configRepsOnErrorInput.value, 10);
     const newInitialReps = parseInt(configInitialRepsInput.value, 10);
+    const newTheme = configThemeSelect.value;
 
     let configChanged = false;
     let initialRepsChanged = false;
@@ -1285,6 +1296,12 @@ function handleSaveConfig() {
     if (!isNaN(newInitialReps) && newInitialReps >= 1 && newInitialReps !== configInitialRepetitions) {
         initialRepsChanged = true;
         // No actualizamos configInitialRepetitions aquí todavía, esperamos confirmación si es necesario
+    }
+
+    if (newTheme !== themeMode) {
+        themeMode = newTheme;
+        applyTheme(themeMode);
+        configChanged = true;
     }
 
     if (initialRepsChanged) {
@@ -1314,4 +1331,10 @@ function handleSaveConfig() {
     }
 
     closeConfigModal();
+}
+
+function applyTheme(mode) {
+    if (mode !== 'dark' && mode !== 'light') return;
+    themeMode = mode;
+    document.body.classList.toggle('dark-mode', mode === 'dark');
 }

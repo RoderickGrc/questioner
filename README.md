@@ -9,8 +9,10 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 - **Seguimiento de repeticiones**: cada pregunta puede repetirse varias veces hasta ser respondida correctamente las veces requeridas.
 - **Persistencia del progreso** mediante `localStorage` y la opción de guardar o cargar ficheros JSON.
 - **Configuración**: desde la interfaz se pueden definir las repeticiones iniciales y el aumento al fallar una pregunta.
+- **Diseño moderno** con posibilidad de tema claro u oscuro.
 - **Interfaz adaptable** para escritorio y dispositivos móviles.
 - **Barra de tiempo restante** en la parte inferior con una estimación dinámica del tiempo faltante.
+- **Modo claro u oscuro** seleccionable desde la configuración.
 
 ## Uso rápido
 
