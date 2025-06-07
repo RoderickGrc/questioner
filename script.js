@@ -466,6 +466,9 @@ function displayWrittenQuestion(index) {
 
     quizDiv.appendChild(actionContainer);
 
+    // Posicionar cursor inmediatamente en el cuadro de texto
+    setTimeout(() => input.focus(), 0);
+
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -829,7 +832,13 @@ function shuffleArray(array) {
 }
 
 function normalizeAnswer(text) {
-    return text.toLowerCase().trim().replace(/,/g, '');
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[.,;:¿?¡!]/g, '')
+        .trim();
 }
 
 function levenshtein(a, b) {

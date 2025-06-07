@@ -8,12 +8,16 @@
 2. Update `displayQuestion` to show a different UI when `isWritten` is true:
    - Show the question text followed by an input box and an "Aceptar" button.
    - The input listens for the `Enter` key to submit.
+   - Al mostrarse la pregunta, el foco debe posicionarse en el cuadro de texto
+     automáticamente.
 
 3. Implement `submitWrittenAnswer` and `showWrittenExplanation`:
    - Compare the user's text with the correct answer using a fuzzy match
-     (Levenshtein ratio ≥ 0.85), ignoring case, commas and leading/trailing spaces.
-   - After evaluating, update stats and display whether the answer was correct,
-     the correct answer if needed, any explanation text and a "Siguiente" button.
+     (Levenshtein ratio ≥ 0.85).
+   - Normalizará eliminando mayúsculas, comas, tildes y espacios laterales para
+     evitar errores de forma.
+   - Después de evaluar, actualizar estadísticas y mostrar si fue correcta,
+     la respuesta correcta si aplica, explicación y un botón "Siguiente".
 
 4. Add small CSS styles for the input element if necessary.
 
