@@ -23,3 +23,10 @@
 
 5. **Ejecutar pruebas**
    - Ejecutar `npm test` aunque no exista `package.json` para mostrar el fallo esperado.
+
+6. **Modo claro/oscuro y mejoras estéticas**
+   - Añadir en el modal de configuración una opción para elegir entre tema claro u oscuro.
+   - Guardar la preferencia en `localStorage` y aplicarla al cargar la página.
+   - Definir variables CSS para los colores base y crear estilos para `.dark-mode`.
+   - Mantener la diferenciación verde/roja de respuestas correctas e incorrectas.
+   - Revisar los estilos generales para dar un aspecto más moderno.
