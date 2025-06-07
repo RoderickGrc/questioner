@@ -156,11 +156,13 @@ function parseCSV(data) {
             return;
         }
 
+        const isWritten = correctAnswers.length === 1 && incorrectAnswers.length === 0;
         questions.push({
             pregunta: pregunta,
             correctAnswers: correctAnswers,
             incorrectAnswers: incorrectAnswers,
-            explicacion: explicacion
+            explicacion: explicacion,
+            isWritten: isWritten
         });
     });
     totalQuestions = questions.length;
@@ -295,6 +297,11 @@ function displayQuestion(index) {
         return;
     }
 
+    if (question.isWritten) {
+        displayWrittenQuestion(index);
+        return;
+    }
+
     isMultiSelectMode = question.correctAnswers.length > 1;
 
     // Mostrar info de repeticiones
@@ -413,6 +420,156 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
 
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, [selectedOption]);
+}
+
+function displayWrittenQuestion(index) {
+    let question = questions[index];
+    let stats = questionStats[index];
+
+    quizDiv.innerHTML = '';
+    if (quizContainerDiv) {
+        quizContainerDiv.classList.remove('correct-answer-border', 'incorrect-answer-border');
+    }
+
+    let repsDiv = document.createElement('div');
+    repsDiv.className = 'reps-remaining';
+    repsDiv.textContent = `Repeticiones faltantes para esta pregunta: ${stats.repetitionsRemaining}`;
+    quizDiv.appendChild(repsDiv);
+
+    let remainingDiv = document.createElement('div');
+    remainingDiv.className = 'questions-remaining';
+    remainingDiv.textContent = `Total de repeticiones restantes: ${getTotalRepetitionsRemaining()}`;
+    quizDiv.appendChild(remainingDiv);
+
+    let questionElement = document.createElement('h2');
+    questionElement.textContent = question.pregunta;
+    quizDiv.appendChild(questionElement);
+
+    let input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'written-answer-input';
+    input.className = 'written-answer-input';
+    quizDiv.appendChild(input);
+
+    let actionContainer = document.createElement('div');
+    actionContainer.className = 'action-buttons-container';
+
+    let submitButton = document.createElement('button');
+    submitButton.id = 'submit-written-button';
+    submitButton.className = 'confirm-button';
+    let buttonText = document.createElement('span');
+    buttonText.className = 'button-text';
+    buttonText.textContent = 'Aceptar';
+    submitButton.appendChild(buttonText);
+    submitButton.addEventListener('click', () => submitWrittenAnswer(index));
+    actionContainer.appendChild(submitButton);
+
+    // Botón para saltar la pregunta
+    let skipButton = document.createElement('button');
+    skipButton.id = 'skip-question-button';
+    skipButton.className = 'skip-button';
+    let delSpan = document.createElement('span');
+    delSpan.className = 'key-indicator';
+    delSpan.textContent = '⇧⌦';
+    delSpan.style.marginRight = '8px';
+    skipButton.appendChild(delSpan);
+    let skipText = document.createElement('span');
+    skipText.textContent = 'Saltar Pregunta';
+    skipButton.appendChild(skipText);
+    skipButton.addEventListener('click', () => handleSkipQuestion(index));
+    actionContainer.appendChild(skipButton);
+
+    quizDiv.appendChild(actionContainer);
+
+    // Posicionar cursor inmediatamente en el cuadro de texto
+    setTimeout(() => input.focus(), 0);
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitButton.click();
+        }
+    });
+
+    setupKeyListenerForWritten(index);
+}
+
+function submitWrittenAnswer(questionIndex) {
+    let input = document.getElementById('written-answer-input');
+    let submitButton = document.getElementById('submit-written-button');
+    if (input) input.disabled = true;
+    if (submitButton) submitButton.disabled = true;
+    resetKeyListener();
+
+    let userAnswer = input ? input.value : '';
+    let question = questions[questionIndex];
+    let isCorrect = fuzzyCompare(userAnswer, question.correctAnswers[0]);
+
+    updateStats(questionIndex, isCorrect);
+    showWrittenExplanation(questionIndex, isCorrect, userAnswer);
+}
+
+function showWrittenExplanation(questionIndex, isCorrect, userAnswer) {
+    let question = questions[questionIndex];
+    quizDiv.innerHTML = '';
+
+    if (quizContainerDiv) {
+        quizContainerDiv.classList.remove('correct-answer-border', 'incorrect-answer-border');
+        quizContainerDiv.classList.add(isCorrect ? 'correct-answer-border' : 'incorrect-answer-border');
+    }
+
+    let questionElement = document.createElement('h2');
+    questionElement.textContent = question.pregunta;
+    quizDiv.appendChild(questionElement);
+
+    let yourAnswerDiv = document.createElement('div');
+    yourAnswerDiv.className = 'selected-answers-display';
+    let title = document.createElement('p');
+    title.textContent = 'Tu respuesta:';
+    yourAnswerDiv.appendChild(title);
+    let ans = document.createElement('div');
+    ans.className = 'selected-option-display';
+    ans.textContent = userAnswer || '(Sin respuesta)';
+    ans.classList.add(isCorrect ? 'correct-selection' : 'incorrect-selection');
+    yourAnswerDiv.appendChild(ans);
+    quizDiv.appendChild(yourAnswerDiv);
+
+    let correctDiv = document.createElement('div');
+    correctDiv.className = 'missed-correct-answers-display';
+    let pt = document.createElement('p');
+    pt.textContent = 'Respuesta correcta (ideal):';
+    correctDiv.appendChild(pt);
+    let val = document.createElement('div');
+    val.className = 'unselected-correct-option';
+    val.textContent = question.correctAnswers[0];
+    correctDiv.appendChild(val);
+    quizDiv.appendChild(correctDiv);
+
+    if (question.explicacion && question.explicacion.trim() !== '') {
+        let contextDiv = document.createElement('div');
+        contextDiv.className = 'context-info';
+        contextDiv.textContent = question.explicacion;
+        quizDiv.appendChild(contextDiv);
+    }
+
+    let nextButton = document.createElement('button');
+    nextButton.id = 'next-button';
+    nextButton.className = 'next-button';
+    let spaceSpan = document.createElement('span');
+    spaceSpan.className = 'key-indicator space';
+    spaceSpan.textContent = '⎵';
+    let nextContent = document.createElement('span');
+    nextContent.className = 'button-text';
+    nextContent.textContent = 'Siguiente';
+    nextButton.appendChild(spaceSpan);
+    nextButton.appendChild(nextContent);
+    nextButton.addEventListener('click', () => {
+        saveState();
+        showNextQuestion();
+    });
+    quizDiv.appendChild(nextButton);
+
+    setupKeyListenerForNext();
 }
 
 function submitMultiAnswer(questionIndex) {
@@ -613,6 +770,10 @@ function disableOptionsAndActions() {
     document.querySelectorAll('.confirm-button, .skip-button').forEach(button => {
         button.disabled = true;
     });
+    let textInput = document.getElementById('written-answer-input');
+    let textButton = document.getElementById('submit-written-button');
+    if (textInput) textInput.disabled = true;
+    if (textButton) textButton.disabled = true;
     resetKeyListener();
 }
 
@@ -651,6 +812,19 @@ function setupKeyListenerForQuestion(questionIndex, numOptions) {
     }
 }
 
+function setupKeyListenerForWritten(questionIndex) {
+    document.onkeydown = function(e) {
+        if (document.getElementById('submit-written-button')?.disabled) return;
+        if (e.key === 'Delete' && e.shiftKey) {
+            e.preventDefault();
+            const skipButton = document.getElementById('skip-question-button');
+            if (skipButton && !skipButton.disabled) {
+                skipButton.click();
+            }
+        }
+    }
+}
+
 function setupKeyListenerForNext() {
     document.onkeydown = function(e) {
         if (e.code === 'Space' || e.key === ' ') { // Añadir e.key === ' '
@@ -683,6 +857,49 @@ function shuffleArray(array) {
         array[randomIndex] = temporaryValue;
     }
     return array;
+}
+
+function normalizeAnswer(text) {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[.,;:¿?¡!]/g, '')
+        .trim();
+}
+
+function levenshtein(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+function fuzzyCompare(a, b) {
+    const normA = normalizeAnswer(a);
+    const normB = normalizeAnswer(b);
+    if (normA.length === 0 && normB.length === 0) return true;
+    const distance = levenshtein(normA, normB);
+    const similarity = 1 - distance / Math.max(normA.length, normB.length);
+    return similarity >= 0.85;
 }
 
 function showStatusMessage(message, type = "info", duration = 3000) {

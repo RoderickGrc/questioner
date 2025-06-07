@@ -97,6 +97,19 @@ El sistema determina el tipo de pregunta (selección única o múltiple) y cómo
     "El sol gira alrededor de la Tierra.",Falso,,,,Verdadero,,,"En el modelo heliocéntrico, la Tierra y otros planetas giran alrededor del Sol."
     ```
 
+**D. Pregunta de Respuesta Escrita**
+
+*   **Definición:** Se proporciona solamente `Opción correcta 1` y **no** se rellenan las columnas de opciones incorrectas.
+*   **Comportamiento:**
+*   Se muestra un cuadro de texto (el foco se coloca automáticamente en él) donde el usuario escribe la respuesta y puede enviarla con el botón "Aceptar" o presionando **Enter**.
+*   La respuesta introducida se compara con la correcta ignorando mayúsculas, comas, tildes y otros signos de puntuación; se utiliza una coincidencia difusa del 85%.
+    *   Existe un botón **Saltar Pregunta** (o `Shift + Delete`) para omitirla.
+    *   Después de enviar, se indica si la respuesta fue correcta o no y siempre se muestra la respuesta correcta original además de la escrita. También se muestra la explicación si existe.
+*   **Ejemplo CSV:**
+    ```csv
+    "¿Cuál es la capital de Francia?",París,,,,,,"París es la capital de Francia."
+    ```
+
 **Consideraciones Adicionales:**
 
 *   **Campos Vacíos:** Si un campo opcional (como `Opción Correcta 2`, `Opción Incorrecta 3`, `Explicación`, etc.) no se utiliza para una pregunta en particular, simplemente déjelo vacío (es decir, `,,` en el CSV). No escriba "null" o "vacío".
