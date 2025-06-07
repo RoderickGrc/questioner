@@ -5,7 +5,7 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 ## Características principales
 
 - **Carga de preguntas desde CSV**: se usa la biblioteca [Papa Parse](https://www.papaparse.com/) para procesar archivos CSV con el formato descrito en `doc/prompt.md`.
-- **Soporte para selección única o múltiple** según el número de opciones correctas definidas.
+- **Soporte para selección única, múltiple o preguntas de escritura** según cómo se definan las respuestas en el CSV.
 - **Seguimiento de repeticiones**: cada pregunta puede repetirse varias veces hasta ser respondida correctamente las veces requeridas.
 - **Persistencia del progreso** mediante `localStorage` y la opción de guardar o cargar ficheros JSON.
 - **Configuración**: desde la interfaz se pueden definir las repeticiones iniciales y el aumento al fallar una pregunta.
