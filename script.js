@@ -11,6 +11,7 @@ let configModalOverlay = null;
 let configModal = null;
 let configRepsOnErrorInput = null;
 let configInitialRepsInput = null;
+let configThemeSelect = null;
 let saveConfigButton = null;
 let closeModalButton = null;
 let closeModalXButton = null;
@@ -26,6 +27,17 @@ let statusMessageDiv = null;
 let fileInput = null;
 let csvFileInput = null;
 let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
+let timeProgressDiv = null;
+let timeBarDiv = null;
+let timeRemainingSpan = null;
+
+let initialTotalRepetitions = 0;
+let questionStartTime = null;
+let avgTimePerRep = 30; // EMA initial estimate (seconds per repetition)
+const EMA_N = 20;
+const EMA_ALPHA = 2 / (EMA_N + 1);
+
+let themeMode = 'light';
 
 // --- Inicialización ---
 
@@ -36,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput = document.getElementById('file-input');
     csvFileInput = document.getElementById('csv-file-input');
     quizContainerDiv = document.querySelector('.quiz-container');
+    timeProgressDiv = document.getElementById('time-progress');
+    timeBarDiv = document.getElementById('time-bar');
+    timeRemainingSpan = document.getElementById('time-remaining');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -43,19 +58,22 @@ document.addEventListener('DOMContentLoaded', function() {
     configModal = document.getElementById('config-modal');
     configRepsOnErrorInput = document.getElementById('config-reps-on-error');
     configInitialRepsInput = document.getElementById('config-initial-reps');
+    configThemeSelect = document.getElementById('config-theme-select');
     saveConfigButton = document.getElementById('save-config-button');
     closeModalButton = document.getElementById('close-config-modal-button');
     closeModalXButton = document.getElementById('close-modal-x');
 
     if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
+        !timeProgressDiv || !timeBarDiv || !timeRemainingSpan ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
     }
 
     loadQuizConfig(); // Cargar configuración guardada
+    applyTheme(themeMode); // Aplicar el tema al iniciar
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
     loadInitialCSV('questions.csv'); // Cargar el CSV inicial
@@ -184,7 +202,11 @@ function initializeQuiz() {
     questions.forEach((_, index) => {
         const idxStr = index.toString();
         if (!questionStats[idxStr] || typeof questionStats[idxStr].repetitionsRemaining !== 'number') {
-            questionStats[idxStr] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
+            questionStats[idxStr] = {
+                repetitionsRemaining: configInitialRepetitions,
+                lastAskedAt: null,
+                lastErrorAt: null
+            };
             statsNeedInitialization = true;
         }
     });
@@ -268,6 +290,11 @@ function showNextQuestion() {
         return;
     }
 
+    if (initialTotalRepetitions === 0) {
+        initialTotalRepetitions = getTotalRepetitionsRemaining();
+        updateTimeProgress();
+    }
+
     displayQuestion(currentQuestionIndex);
 }
 
@@ -284,6 +311,7 @@ function showCompletionMessage() {
 function displayQuestion(index) {
     let question = questions[index];
     let stats = questionStats[index];
+    startQuestionTimer();
     quizDiv.innerHTML = ''; // Limpiar
 
     // **NUEVO**: Limpiar borde del contenedor (redundante con showNextQuestion, pero seguro)
@@ -418,6 +446,8 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
     let question = questions[questionIndex];
     const isCorrect = question.correctAnswers[0] === selectedOption;
 
+    stopQuestionTimer();
+
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, [selectedOption]);
 }
@@ -425,6 +455,8 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
 function displayWrittenQuestion(index) {
     let question = questions[index];
     let stats = questionStats[index];
+
+    startQuestionTimer();
 
     quizDiv.innerHTML = '';
     if (quizContainerDiv) {
@@ -464,7 +496,25 @@ function displayWrittenQuestion(index) {
     submitButton.addEventListener('click', () => submitWrittenAnswer(index));
     actionContainer.appendChild(submitButton);
 
+    // Botón para saltar la pregunta
+    let skipButton = document.createElement('button');
+    skipButton.id = 'skip-question-button';
+    skipButton.className = 'skip-button';
+    let delSpan = document.createElement('span');
+    delSpan.className = 'key-indicator';
+    delSpan.textContent = '⇧⌦';
+    delSpan.style.marginRight = '8px';
+    skipButton.appendChild(delSpan);
+    let skipText = document.createElement('span');
+    skipText.textContent = 'Saltar Pregunta';
+    skipButton.appendChild(skipText);
+    skipButton.addEventListener('click', () => handleSkipQuestion(index));
+    actionContainer.appendChild(skipButton);
+
     quizDiv.appendChild(actionContainer);
+
+    // Posicionar cursor inmediatamente en el cuadro de texto
+    setTimeout(() => input.focus(), 0);
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -472,6 +522,8 @@ function displayWrittenQuestion(index) {
             submitButton.click();
         }
     });
+
+    setupKeyListenerForWritten(index);
 }
 
 function submitWrittenAnswer(questionIndex) {
@@ -484,6 +536,8 @@ function submitWrittenAnswer(questionIndex) {
     let userAnswer = input ? input.value : '';
     let question = questions[questionIndex];
     let isCorrect = fuzzyCompare(userAnswer, question.correctAnswers[0]);
+
+    stopQuestionTimer();
 
     updateStats(questionIndex, isCorrect);
     showWrittenExplanation(questionIndex, isCorrect, userAnswer);
@@ -514,18 +568,16 @@ function showWrittenExplanation(questionIndex, isCorrect, userAnswer) {
     yourAnswerDiv.appendChild(ans);
     quizDiv.appendChild(yourAnswerDiv);
 
-    if (!isCorrect) {
-        let correctDiv = document.createElement('div');
-        correctDiv.className = 'missed-correct-answers-display';
-        let pt = document.createElement('p');
-        pt.textContent = 'Respuesta correcta:';
-        correctDiv.appendChild(pt);
-        let val = document.createElement('div');
-        val.className = 'unselected-correct-option';
-        val.textContent = question.correctAnswers[0];
-        correctDiv.appendChild(val);
-        quizDiv.appendChild(correctDiv);
-    }
+    let correctDiv = document.createElement('div');
+    correctDiv.className = 'missed-correct-answers-display';
+    let pt = document.createElement('p');
+    pt.textContent = 'Respuesta correcta (ideal):';
+    correctDiv.appendChild(pt);
+    let val = document.createElement('div');
+    val.className = 'unselected-correct-option';
+    val.textContent = question.correctAnswers[0];
+    correctDiv.appendChild(val);
+    quizDiv.appendChild(correctDiv);
 
     if (question.explicacion && question.explicacion.trim() !== '') {
         let contextDiv = document.createElement('div');
@@ -551,6 +603,8 @@ function showWrittenExplanation(questionIndex, isCorrect, userAnswer) {
     });
     quizDiv.appendChild(nextButton);
 
+    updateTimeProgress();
+
     setupKeyListenerForNext();
 }
 
@@ -567,6 +621,8 @@ function submitMultiAnswer(questionIndex) {
     const isCorrect = selectedSet.size === correctSet.size &&
                       [...selectedSet].every(value => correctSet.has(value));
 
+    stopQuestionTimer();
+
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, selectedOptions);
 }
@@ -574,6 +630,8 @@ function submitMultiAnswer(questionIndex) {
 function handleSkipQuestion(questionIndex) {
     console.log(`Skipping question index: ${questionIndex}`);
     disableOptionsAndActions();
+
+    stopQuestionTimer();
 
     if (!questionStats[questionIndex]) {
         console.error("Intentando saltar pregunta con stats inválidos:", questionIndex);
@@ -599,6 +657,7 @@ function updateStats(questionIndex, isCorrect) {
         questionStats[questionIndex].repetitionsRemaining = Math.max(0, questionStats[questionIndex].repetitionsRemaining - 1);
     } else {
         questionStats[questionIndex].repetitionsRemaining += configRepetitionsOnError;
+        questionStats[questionIndex].lastErrorAt = Date.now();
     }
     questionStats[questionIndex].lastAskedAt = Date.now();
 }
@@ -612,6 +671,19 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
     if (quizContainerDiv) {
         quizContainerDiv.classList.remove('correct-answer-border', 'incorrect-answer-border'); // Limpiar primero
         quizContainerDiv.classList.add(isCorrect ? 'correct-answer-border' : 'incorrect-answer-border');
+    }
+
+    if (isMultiSelectMode && !isCorrect) {
+        const banner = document.createElement('div');
+        banner.className = 'answer-banner error-banner';
+        const icon = document.createElement('span');
+        icon.className = 'warning-icon';
+        icon.textContent = '⚠';
+        const msg = document.createElement('span');
+        msg.textContent = 'Respuesta incorrecta: no seleccionaste todas las opciones correctas.';
+        banner.appendChild(icon);
+        banner.appendChild(msg);
+        quizDiv.insertBefore(banner, quizDiv.firstChild);
     }
 
     // --- 1. Mostrar Selecciones del Usuario ---
@@ -638,7 +710,11 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
             selectionDiv.className = 'selected-option-display';
             selectionDiv.textContent = selectionText;
             if (question.correctAnswers.includes(selectionText)) {
-                selectionDiv.classList.add('correct-selection');
+                if (isCorrect) {
+                    selectionDiv.classList.add('correct-selection');
+                } else {
+                    selectionDiv.classList.add('partial-correct-selection');
+                }
             } else {
                 selectionDiv.classList.add('incorrect-selection');
             }
@@ -735,6 +811,8 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
 
     quizDiv.appendChild(nextButton); // Añadir siempre al final
 
+    updateTimeProgress();
+
     setupKeyListenerForNext();
 }
 
@@ -794,6 +872,19 @@ function setupKeyListenerForQuestion(questionIndex, numOptions) {
     }
 }
 
+function setupKeyListenerForWritten(questionIndex) {
+    document.onkeydown = function(e) {
+        if (document.getElementById('submit-written-button')?.disabled) return;
+        if ((e.key === 'Delete' || e.key === 'Backspace') && e.shiftKey) {
+            e.preventDefault();
+            const skipButton = document.getElementById('skip-question-button');
+            if (skipButton && !skipButton.disabled) {
+                skipButton.click();
+            }
+        }
+    }
+}
+
 function setupKeyListenerForNext() {
     document.onkeydown = function(e) {
         if (e.code === 'Space' || e.key === ' ') { // Añadir e.key === ' '
@@ -812,6 +903,51 @@ function resetKeyListener() {
 
 // --- Funciones Auxiliares ---
 
+function startQuestionTimer() {
+    questionStartTime = Date.now();
+}
+
+function stopQuestionTimer() {
+    if (!questionStartTime) return;
+    const delta = (Date.now() - questionStartTime) / 1000;
+    questionStartTime = null;
+    avgTimePerRep = EMA_ALPHA * delta + (1 - EMA_ALPHA) * avgTimePerRep;
+}
+
+function updateTimeProgress() {
+    if (!timeBarDiv || !timeRemainingSpan) return;
+    const T = getTotalRepetitionsRemaining();
+
+    if (initialTotalRepetitions === 0) {
+        initialTotalRepetitions = T;
+    }
+
+    const progress = initialTotalRepetitions === 0 ? 1 :
+        (initialTotalRepetitions - T) / initialTotalRepetitions;
+    timeBarDiv.style.width = `${Math.max(0, Math.min(1, progress)) * 100}%`;
+
+    if (T === 0) {
+        timeRemainingSpan.textContent = `0 min restantes`;
+        return;
+    }
+
+    let harmonicDen = 0;
+    for (const [idx, stat] of Object.entries(questionStats)) {
+        if (stat.repetitionsRemaining === 0) continue;
+        let k = 1.0;
+        const q = questions[idx];
+        if (q.isWritten) k *= 1.4;
+        else if (q.correctAnswers.length > 1) k *= 1.25;
+        if (Date.now() - (stat.lastErrorAt || 0) < 180000) k *= 1.15;
+        if (stat.repetitionsRemaining > configInitialRepetitions) k *= 1.10;
+        harmonicDen += 1 / k;
+    }
+    const kGlobal = T / harmonicDen;
+    const secondsRemaining = kGlobal * avgTimePerRep * T;
+    const minutes = Math.ceil(secondsRemaining / 60);
+    timeRemainingSpan.textContent = `${minutes} min restantes`;
+}
+
 function getTotalRepetitionsRemaining() {
     return Object.values(questionStats).reduce((sum, stats) => sum + (stats?.repetitionsRemaining || 0), 0);
 }
@@ -829,7 +965,13 @@ function shuffleArray(array) {
 }
 
 function normalizeAnswer(text) {
-    return text.toLowerCase().trim().replace(/,/g, '');
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[.,;:¿?¡!]/g, '')
+        .trim();
 }
 
 function levenshtein(a, b) {
@@ -899,7 +1041,8 @@ function saveState() {
     const queueToSave = currentQuestionIndex !== null && currentQuestionIndex !== undefined ? [currentQuestionIndex, ...questionQueue] : [...questionQueue];
     let state = {
         questionStats: questionStats,
-        questionQueue: queueToSave
+        questionQueue: queueToSave,
+        avgTimePerRep: avgTimePerRep
     };
     try {
         localStorage.setItem('quizState', JSON.stringify(state));
@@ -917,6 +1060,9 @@ function loadState() {
             if (state.questionStats && typeof state.questionStats === 'object' && state.questionQueue && Array.isArray(state.questionQueue)) {
                 questionStats = state.questionStats;
                 questionQueue = state.questionQueue;
+                if (typeof state.avgTimePerRep === 'number') {
+                    avgTimePerRep = state.avgTimePerRep;
+                }
                 console.log("Estado cargado desde localStorage.");
                 return true;
             } else {
@@ -1001,6 +1147,9 @@ function handleProgressFileSelect(event) {
             if (state.questionStats && typeof state.questionStats === 'object' && state.questionQueue && Array.isArray(state.questionQueue)) {
                 questionStats = state.questionStats;
                 questionQueue = state.questionQueue;
+                if (typeof state.avgTimePerRep === 'number') {
+                    avgTimePerRep = state.avgTimePerRep;
+                }
                 currentQuestionIndex = null;
                 saveState();
                 initializeQuiz();
@@ -1079,7 +1228,11 @@ function resetCurrentProgress() {
 
         questionStats = {};
         questions.forEach((_, index) => {
-            questionStats[index] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
+            questionStats[index] = {
+                repetitionsRemaining: configInitialRepetitions,
+                lastAskedAt: null,
+                lastErrorAt: null
+            };
         });
 
         questionQueue = [];
@@ -1095,6 +1248,7 @@ function resetCurrentProgress() {
 function populateConfigModal() {
     if (configRepsOnErrorInput) configRepsOnErrorInput.value = configRepetitionsOnError;
     if (configInitialRepsInput) configInitialRepsInput.value = configInitialRepetitions;
+    if (configThemeSelect) configThemeSelect.value = themeMode;
 }
 
 function openConfigModal() {
@@ -1117,6 +1271,9 @@ function loadQuizConfig() {
             if (typeof savedConfig.initialRepetitions === 'number') {
                 configInitialRepetitions = savedConfig.initialRepetitions;
             }
+            if (savedConfig.themeMode === 'dark' || savedConfig.themeMode === 'light') {
+                themeMode = savedConfig.themeMode;
+            }
             console.log("Configuración cargada desde localStorage:", savedConfig);
         } catch (e) {
             console.error("Error al parsear configuración desde localStorage:", e);
@@ -1129,7 +1286,8 @@ function loadQuizConfig() {
 function saveQuizConfig() {
     const currentConfig = {
         repetitionsOnError: configRepetitionsOnError,
-        initialRepetitions: configInitialRepetitions
+        initialRepetitions: configInitialRepetitions,
+        themeMode: themeMode
     };
     try {
         localStorage.setItem(QUIZ_CONFIG_KEY, JSON.stringify(currentConfig));
@@ -1142,6 +1300,7 @@ function saveQuizConfig() {
 function handleSaveConfig() {
     const newRepsOnError = parseInt(configRepsOnErrorInput.value, 10);
     const newInitialReps = parseInt(configInitialRepsInput.value, 10);
+    const newTheme = configThemeSelect.value;
 
     let configChanged = false;
     let initialRepsChanged = false;
@@ -1154,6 +1313,12 @@ function handleSaveConfig() {
     if (!isNaN(newInitialReps) && newInitialReps >= 1 && newInitialReps !== configInitialRepetitions) {
         initialRepsChanged = true;
         // No actualizamos configInitialRepetitions aquí todavía, esperamos confirmación si es necesario
+    }
+
+    if (newTheme !== themeMode) {
+        themeMode = newTheme;
+        applyTheme(themeMode);
+        configChanged = true;
     }
 
     if (initialRepsChanged) {
@@ -1183,4 +1348,10 @@ function handleSaveConfig() {
     }
 
     closeConfigModal();
+}
+
+function applyTheme(mode) {
+    if (mode !== 'dark' && mode !== 'light') return;
+    themeMode = mode;
+    document.body.classList.toggle('dark-mode', mode === 'dark');
 }

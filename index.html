@@ -28,6 +28,10 @@
         <!-- Elemento para mostrar mensajes de estado (opcional) -->
         <div id="status-message" class="status-message"></div>
     </div>
+    <div id="time-progress" class="time-progress">
+        <div id="time-bar" class="time-bar"></div>
+        <span id="time-remaining" class="time-remaining"></span>
+    </div>
     <!-- Cargar script.js después de Papa Parse -->
     <script src="script.js"></script>
     <!-- Modal de Configuración -->
@@ -49,6 +53,17 @@
                 </div>
             </div>
 
+            <div class="config-group">
+                <p class="config-group-title">Apariencia</p>
+                <div class="config-option">
+                    <label for="config-theme-select">Tema:</label>
+                    <select id="config-theme-select">
+                        <option value="light">Claro</option>
+                        <option value="dark">Oscuro</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Aquí se pueden añadir más grupos de configuración en el futuro -->
             <!-- 
             <div class="config-group">
@@ -66,4 +81,5 @@
             </div>
         </div>
     </div>
+</body>
 </html>

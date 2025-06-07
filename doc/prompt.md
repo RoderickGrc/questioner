@@ -101,9 +101,10 @@ El sistema determina el tipo de pregunta (selección única o múltiple) y cómo
 
 *   **Definición:** Se proporciona solamente `Opción correcta 1` y **no** se rellenan las columnas de opciones incorrectas.
 *   **Comportamiento:**
-    *   Se muestra un cuadro de texto donde el usuario escribe la respuesta y puede enviarla con el botón "Aceptar" o presionando **Enter**.
-    *   La respuesta introducida se compara con la correcta ignorando mayúsculas, comas y espacios laterales mediante una coincidencia difusa del 85%.
-    *   Después de enviar, se indica si la respuesta fue correcta o no y se muestra la explicación si existe.
+*   Se muestra un cuadro de texto (el foco se coloca automáticamente en él) donde el usuario escribe la respuesta y puede enviarla con el botón "Aceptar" o presionando **Enter**.
+*   La respuesta introducida se compara con la correcta ignorando mayúsculas, comas, tildes y otros signos de puntuación; se utiliza una coincidencia difusa del 85%.
+    *   Existe un botón **Saltar Pregunta** (o `Shift + Delete`) para omitirla.
+    *   Después de enviar, se indica si la respuesta fue correcta o no y siempre se muestra la respuesta correcta original además de la escrita. También se muestra la explicación si existe.
 *   **Ejemplo CSV:**
     ```csv
     "¿Cuál es la capital de Francia?",París,,,,,,"París es la capital de Francia."

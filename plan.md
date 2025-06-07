@@ -1,22 +1,24 @@
-# Plan for implementing writing question
+# Plan for adjustments
 
-1. Detect writing question when parsing CSV:
-   - If a row has exactly one `Opción correcta` and none of the `Opción Incorrecta` fields,
-     mark the question with `isWritten: true`.
-   - Keep existing properties for other question types.
+1. **Test CSV simplificado**
+   - `questions.csv` contiene seis preguntas de prueba (dos de selección única, dos múltiple y dos escritas).
 
-2. Update `displayQuestion` to show a different UI when `isWritten` is true:
-   - Show the question text followed by an input box and an "Aceptar" button.
-   - The input listens for the `Enter` key to submit.
+2. **Atajo Shift + Borrar**
+   - En `setupKeyListenerForWritten` se escucha `Shift + Delete` o `Backspace` para saltar la pregunta.
 
-3. Implement `submitWrittenAnswer` and `showWrittenExplanation`:
-   - Compare the user's text with the correct answer using a fuzzy match
-     (Levenshtein ratio ≥ 0.85), ignoring case, commas and leading/trailing spaces.
-   - After evaluating, update stats and display whether the answer was correct,
-     the correct answer if needed, any explanation text and a "Siguiente" button.
+3. **Barra de progreso inferior**
+   - Usa una media móvil exponencial para estimar el tiempo restante.
+   - Actualiza la barra y el texto flotante tras cada respuesta o salto.
 
-4. Add small CSS styles for the input element if necessary.
+4. **Tema claro u oscuro**
+   - Seleccionable desde la configuración y persistente en `localStorage`.
+   - Variables CSS permiten que todos los componentes cambien de aspecto.
 
-5. Document the new question type in `doc/prompt.md`.
+5. **Texto de botones**
+   - Todos los botones utilizan texto negro para asegurar contraste en ambos temas.
 
-6. Run `npm test` (expected to fail as there is no package.json).
+6. **Mejora de errores en selección múltiple**
+   - Si la respuesta es incorrecta por no seleccionar todas las opciones, se muestra un banner rojo con un icono de advertencia.
+   - Las opciones correctas seleccionadas se pintan de amarillo para indicar aciertos parciales.
+   - El contenedor principal tiene un borde rojo más grueso y la explicación aparece resaltada.
+
