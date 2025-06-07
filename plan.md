@@ -1,30 +1,25 @@
-# Plan for implementing writing question
+# Plan for new features
 
-1. Detect writing question when parsing CSV:
-   - If a row has exactly one `Opción correcta` and none of the `Opción Incorrecta` fields,
-     mark the question with `isWritten: true`.
-   - Keep existing properties for other question types.
+1. **Simplify test data**
+   - Replace `questions.csv` with six short questions:
+     - Two de selección única.
+     - Dos de selección múltiple.
+     - Dos de respuesta escrita.
+   - Mantener la línea de cabeceras original.
 
-2. Update `displayQuestion` to show a different UI when `isWritten` is true:
-   - Show the question text followed by an input box and an "Aceptar" button.
-   - The input listens for the `Enter` key to submit.
-   - Al mostrarse la pregunta, el foco debe posicionarse en el cuadro de texto
-     automáticamente.
-   - Deberá existir un botón "Saltar Pregunta" que reduzca las repeticiones y
-     muestre la siguiente. Este salto se activará también con la combinación de
-     teclado **Shift + Delete**.
+2. **Corregir atajo Shift + Borrar**
+   - En `setupKeyListenerForWritten` detectar `Backspace` o `Delete` con la tecla `Shift` para activar el salto.
 
-3. Implement `submitWrittenAnswer` and `showWrittenExplanation`:
-   - Compare the user's text with the correct answer using a fuzzy match
-     (Levenshtein ratio ≥ 0.85).
-   - Normalizará eliminando mayúsculas, comas, tildes y espacios laterales para
-     evitar errores de forma.
-   - Después de evaluar, actualizar estadísticas y mostrar siempre la respuesta
-     escrita por el usuario y la respuesta correcta original (aunque coincidan).
-     Mostrar la explicación si existe y un botón "Siguiente".
+3. **Barra de progreso con tiempo restante**
+   - Añadir en `index.html` un contenedor fijo al pie de la página con una barra de carga y un texto "X minutos faltantes".
+   - Crear estilos discretos en `styles.css` para que no sea invasiva.
+   - En `script.js` llevar un contador de tiempo por pregunta para calcular el promedio.
+   - Estimar el tiempo restante multiplicando ese promedio por las repeticiones pendientes y mostrarlo en la barra.
+   - Actualizar el ancho de la barra según el porcentaje de preguntas completadas.
 
-4. Add small CSS styles for the input element if necessary.
+4. **Integración en la lógica existente**
+   - Inicializar el temporizador cuando se muestra cada pregunta y detenerlo al responder o saltar.
+   - Ajustar las llamadas a `showNextQuestion` y `updateStats` para actualizar la barra y el texto.
 
-5. Document the new question type in `doc/prompt.md`.
-
-6. Run `npm test` (expected to fail as there is no package.json).
+5. **Ejecutar pruebas**
+   - Ejecutar `npm test` aunque no exista `package.json` para mostrar el fallo esperado.

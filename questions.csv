@@ -1,3 +1,7 @@
 Pregunta,Opción correcta 1,Opción Correcta 2,Opción Correcta 3,Opción Incorrecta 1,Opción Incorrecta 2,Opción Incorrecta 3,Explicación
-"La principal ventaja de una BD orientada a objetos es su mayor eficiencia en el acceso a datos en comparación con una BD relacional y por la base matemática de ésta, por lo que el soporte para esas consultas es robusto.",Falso,,,Verdadero,,,"Según la página 37 de la Unidad III (Representación de los Datos Geográficos), la principal ventaja de una BD orientada a objetos es su mayor eficiencia en el acceso a datos en comparación con una BD relacional. Sin embargo, carece de la base matemática de esta última, por lo que el soporte para sus consultas es menos robusto, no más."
-"¿Cuál es la capital de Francia?",París,,,,,,"París es la capital de Francia."
+"¿Cuál es la capital de España?",Madrid,,,Barcelona,Sevilla,,
+"¿Qué color se obtiene mezclando rojo y azul?",Morado,,,Verde,Naranja,,
+"Selecciona lenguajes de programación",JavaScript,Python,,HTML,CSS,,
+"¿Cuáles de estos son planetas enanos?",Plutón,Ceres,,Marte,Venus,,"Plutón y Ceres se clasifican como planetas enanos."
+"¿Cuál es la capital de Francia?",París,,,,,,
+"Escribe la palabra 'programación' con tilde",programación,,,,,,"Recuerda usar la tilde sobre la última 'o'."

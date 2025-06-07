@@ -541,3 +541,30 @@ body {
 .hidden { /* Ya debería existir, pero asegurar que esté y tenga !important si es necesario */
     display: none !important;
 }
+
+/* Barra de tiempo restante al pie */
+.time-progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    display: flex;
+    flex-direction: column;
+    z-index: 99;
+}
+
+.time-bar {
+    height: 5px;
+    background: #28a745;
+    width: 0%;
+    margin-bottom: 2px;
+    transition: width 0.3s ease;
+}
+
+.time-remaining {
+    align-self: flex-end;
+}

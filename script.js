@@ -26,6 +26,14 @@ let statusMessageDiv = null;
 let fileInput = null;
 let csvFileInput = null;
 let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
+let timeProgressDiv = null;
+let timeBarDiv = null;
+let timeRemainingSpan = null;
+
+let initialTotalRepetitions = 0;
+let questionStartTime = null;
+let totalTimeTaken = 0;
+let answeredCount = 0;
 
 // --- Inicialización ---
 
@@ -36,6 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput = document.getElementById('file-input');
     csvFileInput = document.getElementById('csv-file-input');
     quizContainerDiv = document.querySelector('.quiz-container');
+    timeProgressDiv = document.getElementById('time-progress');
+    timeBarDiv = document.getElementById('time-bar');
+    timeRemainingSpan = document.getElementById('time-remaining');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -48,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeModalXButton = document.getElementById('close-modal-x');
 
     if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
+        !timeProgressDiv || !timeBarDiv || !timeRemainingSpan ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !saveConfigButton || !closeModalButton || !closeModalXButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
@@ -268,6 +280,11 @@ function showNextQuestion() {
         return;
     }
 
+    if (initialTotalRepetitions === 0) {
+        initialTotalRepetitions = getTotalRepetitionsRemaining();
+        updateTimeProgress();
+    }
+
     displayQuestion(currentQuestionIndex);
 }
 
@@ -284,6 +301,7 @@ function showCompletionMessage() {
 function displayQuestion(index) {
     let question = questions[index];
     let stats = questionStats[index];
+    startQuestionTimer();
     quizDiv.innerHTML = ''; // Limpiar
 
     // **NUEVO**: Limpiar borde del contenedor (redundante con showNextQuestion, pero seguro)
@@ -418,6 +436,8 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
     let question = questions[questionIndex];
     const isCorrect = question.correctAnswers[0] === selectedOption;
 
+    stopQuestionTimer();
+
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, [selectedOption]);
 }
@@ -425,6 +445,8 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
 function displayWrittenQuestion(index) {
     let question = questions[index];
     let stats = questionStats[index];
+
+    startQuestionTimer();
 
     quizDiv.innerHTML = '';
     if (quizContainerDiv) {
@@ -505,6 +527,8 @@ function submitWrittenAnswer(questionIndex) {
     let question = questions[questionIndex];
     let isCorrect = fuzzyCompare(userAnswer, question.correctAnswers[0]);
 
+    stopQuestionTimer();
+
     updateStats(questionIndex, isCorrect);
     showWrittenExplanation(questionIndex, isCorrect, userAnswer);
 }
@@ -569,6 +593,8 @@ function showWrittenExplanation(questionIndex, isCorrect, userAnswer) {
     });
     quizDiv.appendChild(nextButton);
 
+    updateTimeProgress();
+
     setupKeyListenerForNext();
 }
 
@@ -585,6 +611,8 @@ function submitMultiAnswer(questionIndex) {
     const isCorrect = selectedSet.size === correctSet.size &&
                       [...selectedSet].every(value => correctSet.has(value));
 
+    stopQuestionTimer();
+
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, selectedOptions);
 }
@@ -592,6 +620,8 @@ function submitMultiAnswer(questionIndex) {
 function handleSkipQuestion(questionIndex) {
     console.log(`Skipping question index: ${questionIndex}`);
     disableOptionsAndActions();
+
+    stopQuestionTimer();
 
     if (!questionStats[questionIndex]) {
         console.error("Intentando saltar pregunta con stats inválidos:", questionIndex);
@@ -753,6 +783,8 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
 
     quizDiv.appendChild(nextButton); // Añadir siempre al final
 
+    updateTimeProgress();
+
     setupKeyListenerForNext();
 }
 
@@ -815,7 +847,7 @@ function setupKeyListenerForQuestion(questionIndex, numOptions) {
 function setupKeyListenerForWritten(questionIndex) {
     document.onkeydown = function(e) {
         if (document.getElementById('submit-written-button')?.disabled) return;
-        if (e.key === 'Delete' && e.shiftKey) {
+        if ((e.key === 'Delete' || e.key === 'Backspace') && e.shiftKey) {
             e.preventDefault();
             const skipButton = document.getElementById('skip-question-button');
             if (skipButton && !skipButton.disabled) {
@@ -842,6 +874,29 @@ function resetKeyListener() {
 }
 
 // --- Funciones Auxiliares ---
+
+function startQuestionTimer() {
+    questionStartTime = Date.now();
+}
+
+function stopQuestionTimer() {
+    if (questionStartTime) {
+        totalTimeTaken += (Date.now() - questionStartTime) / 1000;
+        answeredCount++;
+        questionStartTime = null;
+    }
+}
+
+function updateTimeProgress() {
+    if (!timeBarDiv || !timeRemainingSpan) return;
+    const remaining = getTotalRepetitionsRemaining();
+    const progress = initialTotalRepetitions === 0 ? 0 :
+        (initialTotalRepetitions - remaining) / initialTotalRepetitions;
+    timeBarDiv.style.width = `${Math.max(0, Math.min(1, progress)) * 100}%`;
+    const avg = answeredCount ? totalTimeTaken / answeredCount : 30;
+    const minutes = Math.ceil((avg * remaining) / 60);
+    timeRemainingSpan.textContent = `${minutes} minutos faltantes`;
+}
 
 function getTotalRepetitionsRemaining() {
     return Object.values(questionStats).reduce((sum, stats) => sum + (stats?.repetitionsRemaining || 0), 0);
