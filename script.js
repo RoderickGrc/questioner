@@ -673,6 +673,19 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
         quizContainerDiv.classList.add(isCorrect ? 'correct-answer-border' : 'incorrect-answer-border');
     }
 
+    if (isMultiSelectMode && !isCorrect) {
+        const banner = document.createElement('div');
+        banner.className = 'answer-banner error-banner';
+        const icon = document.createElement('span');
+        icon.className = 'warning-icon';
+        icon.textContent = '⚠';
+        const msg = document.createElement('span');
+        msg.textContent = 'Respuesta incorrecta: no seleccionaste todas las opciones correctas.';
+        banner.appendChild(icon);
+        banner.appendChild(msg);
+        quizDiv.insertBefore(banner, quizDiv.firstChild);
+    }
+
     // --- 1. Mostrar Selecciones del Usuario ---
     const selectionsDisplayDiv = document.createElement('div');
     selectionsDisplayDiv.className = 'selected-answers-display';
@@ -697,7 +710,11 @@ function showExplanationAndNext(questionIndex, isCorrect, userSelections) {
             selectionDiv.className = 'selected-option-display';
             selectionDiv.textContent = selectionText;
             if (question.correctAnswers.includes(selectionText)) {
-                selectionDiv.classList.add('correct-selection');
+                if (isCorrect) {
+                    selectionDiv.classList.add('correct-selection');
+                } else {
+                    selectionDiv.classList.add('partial-correct-selection');
+                }
             } else {
                 selectionDiv.classList.add('incorrect-selection');
             }

@@ -13,6 +13,8 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 - **Interfaz adaptable** para escritorio y dispositivos móviles.
 - **Barra de tiempo restante** en la parte inferior con una estimación dinámica del tiempo faltante.
 - **Modo claro u oscuro** seleccionable desde la configuración.
+- **Texto de botones negro** para asegurar contraste en ambos temas.
+- **Banner de error en preguntas múltiples** que resalta aciertos parciales en amarillo.
 
 ## Uso rápido
 
