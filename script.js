@@ -32,8 +32,9 @@ let timeRemainingSpan = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
-let totalTimeTaken = 0;
-let answeredCount = 0;
+let avgTimePerRep = 30; // EMA initial estimate (seconds per repetition)
+const EMA_N = 20;
+const EMA_ALPHA = 2 / (EMA_N + 1);
 
 // --- Inicialización ---
 
@@ -196,7 +197,11 @@ function initializeQuiz() {
     questions.forEach((_, index) => {
         const idxStr = index.toString();
         if (!questionStats[idxStr] || typeof questionStats[idxStr].repetitionsRemaining !== 'number') {
-            questionStats[idxStr] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
+            questionStats[idxStr] = {
+                repetitionsRemaining: configInitialRepetitions,
+                lastAskedAt: null,
+                lastErrorAt: null
+            };
             statsNeedInitialization = true;
         }
     });
@@ -647,6 +652,7 @@ function updateStats(questionIndex, isCorrect) {
         questionStats[questionIndex].repetitionsRemaining = Math.max(0, questionStats[questionIndex].repetitionsRemaining - 1);
     } else {
         questionStats[questionIndex].repetitionsRemaining += configRepetitionsOnError;
+        questionStats[questionIndex].lastErrorAt = Date.now();
     }
     questionStats[questionIndex].lastAskedAt = Date.now();
 }
@@ -880,22 +886,44 @@ function startQuestionTimer() {
 }
 
 function stopQuestionTimer() {
-    if (questionStartTime) {
-        totalTimeTaken += (Date.now() - questionStartTime) / 1000;
-        answeredCount++;
-        questionStartTime = null;
-    }
+    if (!questionStartTime) return;
+    const delta = (Date.now() - questionStartTime) / 1000;
+    questionStartTime = null;
+    avgTimePerRep = EMA_ALPHA * delta + (1 - EMA_ALPHA) * avgTimePerRep;
 }
 
 function updateTimeProgress() {
     if (!timeBarDiv || !timeRemainingSpan) return;
-    const remaining = getTotalRepetitionsRemaining();
-    const progress = initialTotalRepetitions === 0 ? 0 :
-        (initialTotalRepetitions - remaining) / initialTotalRepetitions;
+    const T = getTotalRepetitionsRemaining();
+
+    if (initialTotalRepetitions === 0) {
+        initialTotalRepetitions = T;
+    }
+
+    const progress = initialTotalRepetitions === 0 ? 1 :
+        (initialTotalRepetitions - T) / initialTotalRepetitions;
     timeBarDiv.style.width = `${Math.max(0, Math.min(1, progress)) * 100}%`;
-    const avg = answeredCount ? totalTimeTaken / answeredCount : 30;
-    const minutes = Math.ceil((avg * remaining) / 60);
-    timeRemainingSpan.textContent = `${minutes} minutos faltantes`;
+
+    if (T === 0) {
+        timeRemainingSpan.textContent = `0 min restantes`;
+        return;
+    }
+
+    let harmonicDen = 0;
+    for (const [idx, stat] of Object.entries(questionStats)) {
+        if (stat.repetitionsRemaining === 0) continue;
+        let k = 1.0;
+        const q = questions[idx];
+        if (q.isWritten) k *= 1.4;
+        else if (q.correctAnswers.length > 1) k *= 1.25;
+        if (Date.now() - (stat.lastErrorAt || 0) < 180000) k *= 1.15;
+        if (stat.repetitionsRemaining > configInitialRepetitions) k *= 1.10;
+        harmonicDen += 1 / k;
+    }
+    const kGlobal = T / harmonicDen;
+    const secondsRemaining = kGlobal * avgTimePerRep * T;
+    const minutes = Math.ceil(secondsRemaining / 60);
+    timeRemainingSpan.textContent = `${minutes} min restantes`;
 }
 
 function getTotalRepetitionsRemaining() {
@@ -991,7 +1019,8 @@ function saveState() {
     const queueToSave = currentQuestionIndex !== null && currentQuestionIndex !== undefined ? [currentQuestionIndex, ...questionQueue] : [...questionQueue];
     let state = {
         questionStats: questionStats,
-        questionQueue: queueToSave
+        questionQueue: queueToSave,
+        avgTimePerRep: avgTimePerRep
     };
     try {
         localStorage.setItem('quizState', JSON.stringify(state));
@@ -1009,6 +1038,9 @@ function loadState() {
             if (state.questionStats && typeof state.questionStats === 'object' && state.questionQueue && Array.isArray(state.questionQueue)) {
                 questionStats = state.questionStats;
                 questionQueue = state.questionQueue;
+                if (typeof state.avgTimePerRep === 'number') {
+                    avgTimePerRep = state.avgTimePerRep;
+                }
                 console.log("Estado cargado desde localStorage.");
                 return true;
             } else {
@@ -1093,6 +1125,9 @@ function handleProgressFileSelect(event) {
             if (state.questionStats && typeof state.questionStats === 'object' && state.questionQueue && Array.isArray(state.questionQueue)) {
                 questionStats = state.questionStats;
                 questionQueue = state.questionQueue;
+                if (typeof state.avgTimePerRep === 'number') {
+                    avgTimePerRep = state.avgTimePerRep;
+                }
                 currentQuestionIndex = null;
                 saveState();
                 initializeQuiz();
@@ -1171,7 +1206,11 @@ function resetCurrentProgress() {
 
         questionStats = {};
         questions.forEach((_, index) => {
-            questionStats[index] = { repetitionsRemaining: configInitialRepetitions, lastAskedAt: null };
+            questionStats[index] = {
+                repetitionsRemaining: configInitialRepetitions,
+                lastAskedAt: null,
+                lastErrorAt: null
+            };
         });
 
         questionQueue = [];

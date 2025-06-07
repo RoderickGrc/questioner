@@ -10,12 +10,12 @@
 2. **Corregir atajo Shift + Borrar**
    - En `setupKeyListenerForWritten` detectar `Backspace` o `Delete` con la tecla `Shift` para activar el salto.
 
-3. **Barra de progreso con tiempo restante**
-   - Añadir en `index.html` un contenedor fijo al pie de la página con una barra de carga y un texto "X minutos faltantes".
-   - Crear estilos discretos en `styles.css` para que no sea invasiva.
-   - En `script.js` llevar un contador de tiempo por pregunta para calcular el promedio.
-   - Estimar el tiempo restante multiplicando ese promedio por las repeticiones pendientes y mostrarlo en la barra.
-   - Actualizar el ancho de la barra según el porcentaje de preguntas completadas.
+3. **Barra de progreso con estimación dinámica**
+   - El texto de minutos restantes flota junto a la barra inferior.
+   - Calcular el tiempo medio de respuesta con una media móvil exponencial (EMA).
+   - Estimar el tiempo faltante ponderando por tipo de pregunta y errores recientes como en la documentación de la tarea.
+   - Guardar `avgTimePerRep` y los últimos errores dentro del estado para persistir tras recargar.
+   - El ancho de la barra refleja el porcentaje de repeticiones completadas.
 
 4. **Integración en la lógica existente**
    - Inicializar el temporizador cuando se muestra cada pregunta y detenerlo al responder o saltar.
