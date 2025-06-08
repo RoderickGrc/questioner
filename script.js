@@ -37,7 +37,7 @@ let avgTimePerRep = 30; // EMA initial estimate (seconds per repetition)
 const EMA_N = 20;
 const EMA_ALPHA = 2 / (EMA_N + 1);
 
-let themeMode = 'light';
+let themeMode = 'dark';
 
 // --- Inicialización ---
 
