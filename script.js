@@ -33,9 +33,13 @@ let timeRemainingSpan = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
+let questionVisibleStartTime = null;
+let accumulatedVisibleTime = 0;
 let avgTimePerRep = 30; // EMA initial estimate (seconds per repetition)
 const EMA_N = 20;
 const EMA_ALPHA = 2 / (EMA_N + 1);
+
+let autosaveIntervalId = null;
 
 let themeMode = 'dark';
 
@@ -77,6 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
     loadInitialCSV('questions.csv'); // Cargar el CSV inicial
+
+    window.addEventListener('beforeunload', saveState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    autosaveIntervalId = setInterval(saveState, 10000);
 });
 
 function setupEventListeners() {
@@ -205,7 +213,8 @@ function initializeQuiz() {
             questionStats[idxStr] = {
                 repetitionsRemaining: configInitialRepetitions,
                 lastAskedAt: null,
-                lastErrorAt: null
+                lastErrorAt: null,
+                avgTime: avgTimePerRep
             };
             statsNeedInitialization = true;
         }
@@ -292,8 +301,8 @@ function showNextQuestion() {
 
     if (initialTotalRepetitions === 0) {
         initialTotalRepetitions = getTotalRepetitionsRemaining();
-        updateTimeProgress();
     }
+    updateTimeProgress();
 
     displayQuestion(currentQuestionIndex);
 }
@@ -446,7 +455,7 @@ function checkSingleAnswer(selectedOption, questionIndex, optionDiv) {
     let question = questions[questionIndex];
     const isCorrect = question.correctAnswers[0] === selectedOption;
 
-    stopQuestionTimer();
+    stopQuestionTimer(questionIndex);
 
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, [selectedOption]);
@@ -537,7 +546,7 @@ function submitWrittenAnswer(questionIndex) {
     let question = questions[questionIndex];
     let isCorrect = fuzzyCompare(userAnswer, question.correctAnswers[0]);
 
-    stopQuestionTimer();
+    stopQuestionTimer(questionIndex);
 
     updateStats(questionIndex, isCorrect);
     showWrittenExplanation(questionIndex, isCorrect, userAnswer);
@@ -621,7 +630,7 @@ function submitMultiAnswer(questionIndex) {
     const isCorrect = selectedSet.size === correctSet.size &&
                       [...selectedSet].every(value => correctSet.has(value));
 
-    stopQuestionTimer();
+    stopQuestionTimer(questionIndex);
 
     updateStats(questionIndex, isCorrect);
     showExplanationAndNext(questionIndex, isCorrect, selectedOptions);
@@ -631,7 +640,7 @@ function handleSkipQuestion(questionIndex) {
     console.log(`Skipping question index: ${questionIndex}`);
     disableOptionsAndActions();
 
-    stopQuestionTimer();
+    stopQuestionTimer(questionIndex);
 
     if (!questionStats[questionIndex]) {
         console.error("Intentando saltar pregunta con stats inválidos:", questionIndex);
@@ -903,14 +912,41 @@ function resetKeyListener() {
 
 // --- Funciones Auxiliares ---
 
-function startQuestionTimer() {
-    questionStartTime = Date.now();
+function handleVisibilityChange() {
+    if (!questionStartTime) return;
+    if (document.visibilityState === 'hidden') {
+        if (questionVisibleStartTime !== null) {
+            accumulatedVisibleTime += Date.now() - questionVisibleStartTime;
+            questionVisibleStartTime = null;
+        }
+        saveState();
+    } else if (document.visibilityState === 'visible') {
+        if (questionVisibleStartTime === null) {
+            questionVisibleStartTime = Date.now();
+        }
+    }
 }
 
-function stopQuestionTimer() {
+function startQuestionTimer() {
+    questionStartTime = Date.now();
+    accumulatedVisibleTime = 0;
+    questionVisibleStartTime = document.visibilityState === 'visible' ? Date.now() : null;
+}
+
+function stopQuestionTimer(qIndex) {
     if (!questionStartTime) return;
-    const delta = (Date.now() - questionStartTime) / 1000;
+    if (questionVisibleStartTime !== null) {
+        accumulatedVisibleTime += Date.now() - questionVisibleStartTime;
+        questionVisibleStartTime = null;
+    }
+    const delta = accumulatedVisibleTime / 1000;
     questionStartTime = null;
+    accumulatedVisibleTime = 0;
+
+    if (typeof qIndex === 'number' && questionStats[qIndex]) {
+        const prev = questionStats[qIndex].avgTime || avgTimePerRep;
+        questionStats[qIndex].avgTime = EMA_ALPHA * delta + (1 - EMA_ALPHA) * prev;
+    }
     avgTimePerRep = EMA_ALPHA * delta + (1 - EMA_ALPHA) * avgTimePerRep;
 }
 
@@ -931,7 +967,7 @@ function updateTimeProgress() {
         return;
     }
 
-    let harmonicDen = 0;
+    let secondsRemaining = 0;
     for (const [idx, stat] of Object.entries(questionStats)) {
         if (stat.repetitionsRemaining === 0) continue;
         let k = 1.0;
@@ -940,10 +976,9 @@ function updateTimeProgress() {
         else if (q.correctAnswers.length > 1) k *= 1.25;
         if (Date.now() - (stat.lastErrorAt || 0) < 180000) k *= 1.15;
         if (stat.repetitionsRemaining > configInitialRepetitions) k *= 1.10;
-        harmonicDen += 1 / k;
+        const avg = stat.avgTime || avgTimePerRep;
+        secondsRemaining += k * avg * stat.repetitionsRemaining;
     }
-    const kGlobal = T / harmonicDen;
-    const secondsRemaining = kGlobal * avgTimePerRep * T;
     const minutes = Math.ceil(secondsRemaining / 60);
     timeRemainingSpan.textContent = `${minutes} min restantes`;
 }
@@ -1063,6 +1098,11 @@ function loadState() {
                 if (typeof state.avgTimePerRep === 'number') {
                     avgTimePerRep = state.avgTimePerRep;
                 }
+                for (const key of Object.keys(questionStats)) {
+                    if (typeof questionStats[key].avgTime !== 'number') {
+                        questionStats[key].avgTime = avgTimePerRep;
+                    }
+                }
                 console.log("Estado cargado desde localStorage.");
                 return true;
             } else {
@@ -1092,6 +1132,7 @@ function resetQuizState() {
     currentQuestionIndex = null;
     totalQuestions = 0;
     isMultiSelectMode = false;
+    initialTotalRepetitions = 0;
     clearState();
     resetKeyListener();
     // Limpiar borde del contenedor si se reinicia
@@ -1149,6 +1190,11 @@ function handleProgressFileSelect(event) {
                 questionQueue = state.questionQueue;
                 if (typeof state.avgTimePerRep === 'number') {
                     avgTimePerRep = state.avgTimePerRep;
+                }
+                for (const key of Object.keys(questionStats)) {
+                    if (typeof questionStats[key].avgTime !== 'number') {
+                        questionStats[key].avgTime = avgTimePerRep;
+                    }
                 }
                 currentQuestionIndex = null;
                 saveState();
@@ -1231,12 +1277,14 @@ function resetCurrentProgress() {
             questionStats[index] = {
                 repetitionsRemaining: configInitialRepetitions,
                 lastAskedAt: null,
-                lastErrorAt: null
+                lastErrorAt: null,
+                avgTime: avgTimePerRep
             };
         });
 
         questionQueue = [];
         currentQuestionIndex = null;
+        initialTotalRepetitions = 0;
         buildQuestionQueue();
 
         showNextQuestion();
