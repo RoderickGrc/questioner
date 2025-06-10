@@ -122,7 +122,7 @@ function loadInitialCSV(filePath) {
             return response.text();
         })
         .then(data => {
-            resetQuizState(); // Limpiar estado antes de parsear
+            resetQuizState(true); // Limpiar estado en memoria pero conservar localStorage
             parseCSV(data);
             if (questions.length > 0) {
                 initializeQuiz();
@@ -1125,7 +1125,7 @@ function clearState() {
     console.log("Estado de localStorage limpiado.");
 }
 
-function resetQuizState() {
+function resetQuizState(preserveLocalStorage = false) {
     questions = [];
     questionStats = {};
     questionQueue = [];
@@ -1133,7 +1133,9 @@ function resetQuizState() {
     totalQuestions = 0;
     isMultiSelectMode = false;
     initialTotalRepetitions = 0;
-    clearState();
+    if (!preserveLocalStorage) {
+        clearState();
+    }
     resetKeyListener();
     // Limpiar borde del contenedor si se reinicia
     if (quizContainerDiv) {
