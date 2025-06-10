@@ -1077,7 +1077,8 @@ function saveState() {
     let state = {
         questionStats: questionStats,
         questionQueue: queueToSave,
-        avgTimePerRep: avgTimePerRep
+        avgTimePerRep: avgTimePerRep,
+        initialTotalRepetitions: initialTotalRepetitions
     };
     try {
         localStorage.setItem('quizState', JSON.stringify(state));
@@ -1097,6 +1098,11 @@ function loadState() {
                 questionQueue = state.questionQueue;
                 if (typeof state.avgTimePerRep === 'number') {
                     avgTimePerRep = state.avgTimePerRep;
+                }
+                if (typeof state.initialTotalRepetitions === 'number') {
+                    initialTotalRepetitions = state.initialTotalRepetitions;
+                } else {
+                    initialTotalRepetitions = getTotalRepetitionsRemaining();
                 }
                 for (const key of Object.keys(questionStats)) {
                     if (typeof questionStats[key].avgTime !== 'number') {
@@ -1154,7 +1160,9 @@ function saveProgressToFile() {
     const queueToSave = currentQuestionIndex !== null && currentQuestionIndex !== undefined ? [currentQuestionIndex, ...questionQueue] : [...questionQueue];
     let state = {
         questionStats: questionStats,
-        questionQueue: queueToSave
+        questionQueue: queueToSave,
+        avgTimePerRep: avgTimePerRep,
+        initialTotalRepetitions: initialTotalRepetitions
     };
     let stateJSON = JSON.stringify(state, null, 2);
     let blob = new Blob([stateJSON], { type: "application/json;charset=utf-8" });
@@ -1192,6 +1200,11 @@ function handleProgressFileSelect(event) {
                 questionQueue = state.questionQueue;
                 if (typeof state.avgTimePerRep === 'number') {
                     avgTimePerRep = state.avgTimePerRep;
+                }
+                if (typeof state.initialTotalRepetitions === 'number') {
+                    initialTotalRepetitions = state.initialTotalRepetitions;
+                } else {
+                    initialTotalRepetitions = getTotalRepetitionsRemaining();
                 }
                 for (const key of Object.keys(questionStats)) {
                     if (typeof questionStats[key].avgTime !== 'number') {
