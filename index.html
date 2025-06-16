@@ -11,9 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-    <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">&#9776;</button>
+    <header class="main-header">
+        <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">&#9776;</button>
+        <span id="collection-name" class="collection-name">Colección</span>
+    </header>
     <aside id="side-menu" class="side-menu">
+        <button id="menu-close" class="menu-close" aria-label="Cerrar menú">&times;</button>
         <div id="side-menu-buttons">
+            <div class="menu-section">
             <button id="home-button" class="menu-item">
                 <span class="menu-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256">
@@ -31,6 +36,8 @@
                 </span>
                 <span class="menu-text">Cambiar Colección</span>
             </button>
+            </div>
+            <div class="menu-section">
 
             <button id="save-progress" class="menu-item">
                 <span class="menu-icon">
@@ -72,6 +79,8 @@
                 <span class="menu-text">Reiniciar Progreso</span>
             </button>
 
+            </div>
+            <div class="menu-section">
             <button id="config-button" class="menu-item">
                 <span class="menu-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256">
@@ -90,6 +99,7 @@
                 <span class="menu-text">Iniciar Sesión</span>
             </button>
         </div>
+            </div>
     </aside>
     <div class="quiz-container">
         <div id="quiz"></div>

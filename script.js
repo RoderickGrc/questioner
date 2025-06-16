@@ -40,6 +40,8 @@ let timeBarDiv = null;
 let timeRemainingSpan = null;
 let menuToggle = null;
 let sideMenu = null;
+let menuClose = null;
+let collectionNameSpan = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -84,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
     timeBarDiv = document.getElementById('time-bar');
     timeRemainingSpan = document.getElementById('time-remaining');
     menuToggle = document.getElementById('menu-toggle');
+    menuClose = document.getElementById('menu-close');
+    collectionNameSpan = document.getElementById('collection-name');
     sideMenu = document.getElementById('side-menu');
     collectionSelect = document.getElementById('collection-select');
     changeCollectionButton = document.getElementById('change-collection-button');
@@ -107,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
-        !menuToggle || !sideMenu) {
+        !menuToggle || !menuClose || !collectionNameSpan || !sideMenu) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -134,13 +138,13 @@ function setupEventListeners() {
     configButton?.addEventListener('click', openConfigModal);
 
     // Menú lateral
-    menuToggle?.addEventListener('click', function() {
-        sideMenu.classList.toggle('open');
+    menuToggle?.addEventListener("click", function() {
+        sideMenu.classList.add("open");
+        menuToggle.style.display = "none";
     });
-    document.addEventListener('click', function(event) {
-        if(sideMenu.classList.contains('open') && !sideMenu.contains(event.target) && event.target !== menuToggle) {
-            sideMenu.classList.remove('open');
-        }
+    menuClose?.addEventListener("click", function() {
+        sideMenu.classList.remove("open");
+        menuToggle.style.display = "";
     });
 
     // Inputs de archivo
@@ -226,6 +230,7 @@ async function loadCollections() {
                 if (!customOption.disabled && saved === 'custom') {
                     collectionSelect.value = 'custom';
                     updateUrlForCollection('custom', true);
+                    updateCollectionName();
                 } else {
                     updateUrlForCollection(null, true);
                     openCollectionModal();
@@ -235,6 +240,7 @@ async function loadCollections() {
                 localStorage.setItem(COLLECTION_STORAGE_KEY, pathId);
                 updateUrlForCollection(pathId, true);
                 await loadQuestionsFromCollection(pathId);
+                updateCollectionName();
                 return;
             } else {
                 updateUrlForCollection(null, true);
@@ -243,11 +249,13 @@ async function loadCollections() {
         } else if (saved && collectionSelect.querySelector(`option[value="${saved}"]`)) {
             collectionSelect.value = saved;
             updateUrlForCollection(saved, true);
+            updateCollectionName();
             if (saved !== 'custom') {
                 await loadQuestionsFromCollection(saved);
             }
         } else if (availableCollections.length > 0) {
             collectionSelect.value = availableCollections[0].id;
+            updateCollectionName();
             updateUrlForCollection(null, true);
             openCollectionModal();
         } else {
@@ -308,6 +316,12 @@ function openCollectionModal() {
 function closeCollectionModal() {
     if (collectionModalOverlay) collectionModalOverlay.classList.add('hidden');
 }
+function updateCollectionName() {
+    const opt = collectionSelect.options[collectionSelect.selectedIndex];
+    if (opt) {
+        collectionNameSpan.textContent = opt.textContent;
+    }
+}
 
 function confirmCollectionSelection() {
     const id = collectionSelect.value;
@@ -319,6 +333,7 @@ function confirmCollectionSelection() {
         localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
         updateUrlForCollection('custom');
     }
+    updateCollectionName();
     closeCollectionModal();
 }
 
