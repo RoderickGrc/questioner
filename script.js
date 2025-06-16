@@ -4,6 +4,7 @@
 let configRepetitionsOnError = 1;
 let configInitialRepetitions = 3;
 const QUIZ_CONFIG_KEY = 'interactiveQuizConfig'; // Clave para localStorage
+const COLLECTION_STORAGE_KEY = 'selectedCollectionId';
 
 // Referencias a elementos del DOM para el modal de configuración
 let configButton = null;
@@ -27,6 +28,10 @@ let statusMessageDiv = null;
 let fileInput = null;
 let csvFileInput = null;
 let collectionSelect = null;
+let changeCollectionButton = null;
+let collectionModalOverlay = null;
+let collectionModal = null;
+let confirmCollectionButton = null;
 let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
@@ -61,6 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
     timeBarDiv = document.getElementById('time-bar');
     timeRemainingSpan = document.getElementById('time-remaining');
     collectionSelect = document.getElementById('collection-select');
+    changeCollectionButton = document.getElementById('change-collection-button');
+    collectionModalOverlay = document.getElementById('collection-modal-overlay');
+    collectionModal = document.getElementById('collection-modal');
+    confirmCollectionButton = document.getElementById('confirm-collection-button');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -75,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
+        !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
@@ -106,6 +116,11 @@ function setupEventListeners() {
     fileInput.addEventListener('change', handleProgressFileSelect);
     csvFileInput.addEventListener('change', handleCsvFileSelect);
     collectionSelect.addEventListener('change', handleCollectionChange);
+    changeCollectionButton?.addEventListener('click', openCollectionModal);
+    confirmCollectionButton?.addEventListener('click', confirmCollectionSelection);
+    collectionModalOverlay?.addEventListener('click', function(event){
+        if(event.target === collectionModalOverlay) closeCollectionModal();
+    });
 
     // Botones y overlay del modal de configuración
     saveConfigButton?.addEventListener('click', handleSaveConfig);
@@ -165,13 +180,25 @@ async function loadCollections() {
             opt.textContent = c.nombre;
             collectionSelect.appendChild(opt);
         });
-        const customOpt = document.createElement('option');
-        customOpt.value = 'custom';
-        customOpt.textContent = 'Personalizado';
-        collectionSelect.appendChild(customOpt);
-        if (data.length > 0) {
+        customOption = document.createElement('option');
+        customOption.value = 'custom';
+        customOption.textContent = 'Personalizado';
+        customOption.disabled = true;
+        collectionSelect.appendChild(customOption);
+
+        const saved = localStorage.getItem(COLLECTION_STORAGE_KEY);
+        if (saved && collectionSelect.querySelector(`option[value="${saved}"]`)) {
+            collectionSelect.value = saved;
+            if (saved !== 'custom') {
+                await loadQuestionsFromCollection(saved);
+            } else {
+                openCollectionModal();
+            }
+        } else if (data.length > 0) {
             collectionSelect.value = data[0].id;
-            await loadQuestionsFromCollection(data[0].id);
+            openCollectionModal();
+        } else {
+            openCollectionModal();
         }
     } catch (e) {
         console.error('Error al cargar colecciones:', e);
@@ -216,9 +243,24 @@ async function loadQuestionsFromCollection(id) {
 }
 
 function handleCollectionChange() {
+    // La carga se confirma con el botón en el modal
+}
+
+function openCollectionModal() {
+    if (collectionModalOverlay) collectionModalOverlay.classList.remove('hidden');
+}
+
+function closeCollectionModal() {
+    if (collectionModalOverlay) collectionModalOverlay.classList.add('hidden');
+}
+
+function confirmCollectionSelection() {
     const id = collectionSelect.value;
-    if (id === 'custom') return;
-    loadQuestionsFromCollection(id);
+    if (id !== 'custom') {
+        localStorage.setItem(COLLECTION_STORAGE_KEY, id);
+        loadQuestionsFromCollection(id);
+    }
+    closeCollectionModal();
 }
 
 function parseCSV(data) {
@@ -1347,7 +1389,11 @@ function handleCsvFileSelect(event) {
              if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border'); // Indicar error visual
         } finally {
             csvFileInput.value = "";
-            if (collectionSelect) collectionSelect.value = 'custom';
+            if (collectionSelect) {
+                if (customOption) customOption.disabled = false;
+                collectionSelect.value = 'custom';
+                localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
+            }
         }
     };
     reader.onerror = function() {
