@@ -11,22 +11,24 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-    <!-- Botones de control en la parte superior -->
-    <div id="progress-buttons">
-        <button id="save-progress">Guardar progreso</button>
-        <button id="load-progress">Cargar progreso</button>
-        <!-- Input oculto para cargar progreso (.json) -->
-        <input type="file" id="file-input" accept=".json" style="display:none">
+    <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">&#9776;</button>
+    <aside id="side-menu" class="side-menu">
+        <div id="progress-buttons">
+            <button id="save-progress">Guardar progreso</button>
+            <button id="load-progress">Cargar progreso</button>
+            <!-- Input oculto para cargar progreso (.json) -->
+            <input type="file" id="file-input" accept=".json" style="display:none">
 
-        <button id="load-csv-button">Cargar Nuevo CSV</button>
-        <!-- Input oculto para cargar nuevo CSV -->
-        <input type="file" id="csv-file-input" accept=".csv" style="display:none">
+            <button id="load-csv-button">Cargar Nuevo CSV</button>
+            <!-- Input oculto para cargar nuevo CSV -->
+            <input type="file" id="csv-file-input" accept=".csv" style="display:none">
 
-        <button id="change-collection-button">Cambiar colección</button>
+            <button id="change-collection-button">Cambiar colección</button>
 
-        <button id="reset-progress-button">Reiniciar Progreso</button>
-        <button id="config-button">Configuración</button>
-    </div>
+            <button id="reset-progress-button">Reiniciar Progreso</button>
+            <button id="config-button">Configuración</button>
+        </div>
+    </aside>
     <div class="quiz-container">
         <div id="quiz"></div>
         <!-- Elemento para mostrar mensajes de estado (opcional) -->

@@ -38,6 +38,8 @@ let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
+let menuToggle = null;
+let sideMenu = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -81,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
     timeProgressDiv = document.getElementById('time-progress');
     timeBarDiv = document.getElementById('time-bar');
     timeRemainingSpan = document.getElementById('time-remaining');
+    menuToggle = document.getElementById('menu-toggle');
+    sideMenu = document.getElementById('side-menu');
     collectionSelect = document.getElementById('collection-select');
     changeCollectionButton = document.getElementById('change-collection-button');
     collectionModalOverlay = document.getElementById('collection-modal-overlay');
@@ -102,7 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
+        !menuToggle || !sideMenu) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -127,6 +132,16 @@ function setupEventListeners() {
     document.getElementById('load-csv-button')?.addEventListener('click', () => csvFileInput.click());
     document.getElementById('reset-progress-button')?.addEventListener('click', resetCurrentProgress);
     configButton?.addEventListener('click', openConfigModal);
+
+    // Menú lateral
+    menuToggle?.addEventListener('click', function() {
+        sideMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', function(event) {
+        if(sideMenu.classList.contains('open') && !sideMenu.contains(event.target) && event.target !== menuToggle) {
+            sideMenu.classList.remove('open');
+        }
+    });
 
     // Inputs de archivo
     fileInput.addEventListener('change', handleProgressFileSelect);
