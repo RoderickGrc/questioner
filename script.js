@@ -38,6 +38,10 @@ let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
+let sidebar = null;
+let openSidebarButton = null;
+let closeSidebarButton = null;
+let collectionTitleSpan = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -87,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function() {
     collectionModal = document.getElementById('collection-modal');
     confirmCollectionButton = document.getElementById('confirm-collection-button');
 
+    sidebar = document.getElementById('sidebar');
+    openSidebarButton = document.getElementById('open-sidebar');
+    closeSidebarButton = document.getElementById('close-sidebar');
+    collectionTitleSpan = document.getElementById('collection-title');
+
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
     configModalOverlay = document.getElementById('config-modal-overlay');
@@ -102,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
+        !sidebar || !openSidebarButton || !closeSidebarButton || !collectionTitleSpan) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -147,6 +157,9 @@ function setupEventListeners() {
             closeConfigModal();
         }
     });
+
+    openSidebarButton?.addEventListener('click', openSidebar);
+    closeSidebarButton?.addEventListener('click', closeSidebar);
 }
 
 // --- Carga de Datos (CSV y Estado) ---
@@ -220,10 +233,12 @@ async function loadCollections() {
                 localStorage.setItem(COLLECTION_STORAGE_KEY, pathId);
                 updateUrlForCollection(pathId, true);
                 await loadQuestionsFromCollection(pathId);
+                updateCollectionTitleById(pathId);
                 return;
             } else {
                 updateUrlForCollection(null, true);
                 openCollectionModal();
+                updateCollectionTitleById(null);
             }
         } else if (saved && collectionSelect.querySelector(`option[value="${saved}"]`)) {
             collectionSelect.value = saved;
@@ -231,10 +246,13 @@ async function loadCollections() {
             if (saved !== 'custom') {
                 await loadQuestionsFromCollection(saved);
             }
+            updateCollectionTitleById(saved);
         } else if (availableCollections.length > 0) {
             collectionSelect.value = availableCollections[0].id;
             updateUrlForCollection(null, true);
             openCollectionModal();
+            updateCollectionTitleById(null);
+            updateCollectionTitleById(availableCollections[0].id);
         } else {
             updateUrlForCollection(null, true);
             openCollectionModal();
@@ -294,15 +312,48 @@ function closeCollectionModal() {
     if (collectionModalOverlay) collectionModalOverlay.classList.add('hidden');
 }
 
+function openSidebar() {
+    sidebar?.classList.add('open');
+    document.body.classList.add('sidebar-open');
+    document.addEventListener('click', handleDocumentClick);
+}
+
+function closeSidebar() {
+    sidebar?.classList.remove('open');
+    document.body.classList.remove('sidebar-open');
+    document.removeEventListener('click', handleDocumentClick);
+}
+
+function handleDocumentClick(event) {
+    if (!sidebar?.classList.contains('open')) return;
+    if (window.innerWidth > 768) return;
+    if (sidebar.contains(event.target) || openSidebarButton.contains(event.target)) {
+        return;
+    }
+    closeSidebar();
+}
+
+function updateCollectionTitleById(id) {
+    if (!collectionTitleSpan) return;
+    if (id === 'custom') {
+        collectionTitleSpan.textContent = 'Personalizado';
+    } else {
+        const col = availableCollections.find(c => c.id === id);
+        collectionTitleSpan.textContent = col ? col.nombre : 'Colección';
+    }
+}
+
 function confirmCollectionSelection() {
     const id = collectionSelect.value;
     if (id !== 'custom') {
         localStorage.setItem(COLLECTION_STORAGE_KEY, id);
         updateUrlForCollection(id);
         loadQuestionsFromCollection(id);
+        updateCollectionTitleById(id);
     } else {
         localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
         updateUrlForCollection('custom');
+        updateCollectionTitleById('custom');
     }
     closeCollectionModal();
 }
@@ -1438,6 +1489,7 @@ function handleCsvFileSelect(event) {
                 collectionSelect.value = 'custom';
                 localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
                 updateUrlForCollection('custom');
+                updateCollectionTitleById('custom');
             }
         }
     };
