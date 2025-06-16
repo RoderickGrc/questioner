@@ -38,6 +38,8 @@ let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
+let homeContainer = null;
+let homeCarousel = null;
 let sidebar = null;
 let openSidebarButton = null;
 let closeSidebarButton = null;
@@ -73,6 +75,46 @@ function updateUrlForCollection(id, replace = false) {
     }
 }
 
+function isHomePath() {
+    const path = window.location.pathname.replace(/\/+$/, '');
+    return path === '' || path === '/home';
+}
+
+function showHome() {
+    homeContainer?.classList.remove('hidden');
+    quizContainerDiv?.classList.add('hidden');
+    timeProgressDiv?.classList.add('hidden');
+}
+
+function showQuiz() {
+    homeContainer?.classList.add('hidden');
+    quizContainerDiv?.classList.remove('hidden');
+    timeProgressDiv?.classList.remove('hidden');
+}
+
+function populateHomeCarousel() {
+    if (!homeCarousel) return;
+    homeCarousel.innerHTML = '';
+    availableCollections.forEach(col => {
+        const card = document.createElement('div');
+        card.className = 'collection-card';
+        card.innerHTML = `
+            <span class="collection-subject">${col.materia || ''}</span>
+            <h3>${col.nombre}</h3>
+            <p>${col.descripcion || ''}</p>
+        `;
+        card.addEventListener('click', () => {
+            showQuiz();
+            updateUrlForCollection(col.id);
+            collectionSelect.value = col.id;
+            localStorage.setItem(COLLECTION_STORAGE_KEY, col.id);
+            loadQuestionsFromCollection(col.id);
+            updateCollectionTitleById(col.id);
+        });
+        homeCarousel.appendChild(card);
+    });
+}
+
 // --- Inicialización ---
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -85,6 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
     timeProgressDiv = document.getElementById('time-progress');
     timeBarDiv = document.getElementById('time-bar');
     timeRemainingSpan = document.getElementById('time-remaining');
+    homeContainer = document.getElementById('home-container');
+    homeCarousel = document.getElementById('home-carousel');
     collectionSelect = document.getElementById('collection-select');
     changeCollectionButton = document.getElementById('change-collection-button');
     collectionModalOverlay = document.getElementById('collection-modal-overlay');
@@ -112,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
-        !sidebar || !openSidebarButton || !closeSidebarButton || !collectionTitleSpan) {
+        !sidebar || !openSidebarButton || !closeSidebarButton || !collectionTitleSpan || !homeContainer || !homeCarousel) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -128,6 +172,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('beforeunload', saveState);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     autosaveIntervalId = setInterval(saveState, 10000);
+    window.addEventListener('popstate', () => {
+        if (isHomePath()) {
+            showHome();
+        } else {
+            showQuiz();
+        }
+    });
 });
 
 function setupEventListeners() {
@@ -215,6 +266,13 @@ async function loadCollections() {
         customOption.textContent = 'Personalizado';
         customOption.disabled = true;
         collectionSelect.appendChild(customOption);
+
+        populateHomeCarousel();
+
+        if (isHomePath()) {
+            showHome();
+            return;
+        }
 
         const saved = localStorage.getItem(COLLECTION_STORAGE_KEY);
         const pathId = getCollectionIdFromPath();
