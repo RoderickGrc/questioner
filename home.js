@@ -2,6 +2,16 @@ const SUPABASE_URL = 'https://infuklajuugncqkarlnp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZnVrbGFqdXVnbmNxa2FybG5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNTIwNzMsImV4cCI6MjA2NTYyODA3M30.-rb8x3G7T0FN6U2GMz1LD_tulNFG9jKyvdv5iDoDidg';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+function getCollectionIdFromPath() {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts[0] === 'collections' ? parts[1] || null : null;
+}
+
+const pathId = getCollectionIdFromPath();
+if (pathId) {
+  window.location.replace(`/quiz.html?collection=${pathId}`);
+}
+
 const loginButton = document.getElementById('login-button');
 const listEl = document.getElementById('collections-list');
 const loginModalOverlay = document.getElementById('login-modal-overlay');
@@ -40,7 +50,7 @@ async function loadCollections() {
   data.forEach(c => {
     const li = document.createElement('li');
     const a = document.createElement('a');
-    a.href = `/quiz.html?collection=${c.id}`;
+    a.href = `/collections/${c.id}`;
     a.textContent = c.nombre;
     li.appendChild(a);
     listEl.appendChild(li);
