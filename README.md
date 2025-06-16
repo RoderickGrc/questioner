@@ -10,6 +10,7 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 - **Persistencia del progreso** mediante `localStorage` y la opción de guardar o cargar ficheros JSON.
 - **Configuración**: desde la interfaz se pueden definir las repeticiones iniciales y el aumento al fallar una pregunta.
 - **Diseño moderno** con posibilidad de tema claro u oscuro.
+- **Menú lateral con iconos** para una apariencia más profesional.
 - **Interfaz adaptable** para escritorio y dispositivos móviles.
 - **Barra de tiempo restante** en la parte inferior con una estimación dinámica del tiempo faltante.
 - **Modo claro u oscuro** seleccionable desde la configuración.
