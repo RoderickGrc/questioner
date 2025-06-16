@@ -110,6 +110,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 0.5rem 1rem;
+    min-height: 48px; /* Mantiene la altura estable */
     background-color: var(--container-bg);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: relative;
@@ -153,9 +154,13 @@ body {
 
 /* Desplazar el encabezado cuando el sidebar está abierto en pantallas grandes */
 @media (min-width: 769px) {
-    body.sidebar-open .main-header {
-        transform: translateX(240px);
-    }
+body.sidebar-open .main-header {
+    transform: translateX(240px);
+}
+
+body.sidebar-open {
+    overflow: hidden; /* Evita barras de desplazamiento al mostrar el sidebar */
+}
 }
 
 .sidebar .menu-section {
@@ -179,6 +184,11 @@ body {
     font: inherit;
     cursor: pointer;
     text-decoration: none;
+}
+
+.sidebar button:hover,
+.sidebar a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .close-sidebar {
