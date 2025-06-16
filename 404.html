@@ -11,22 +11,32 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-    <!-- Botones de control en la parte superior -->
-    <div id="progress-buttons">
-        <button id="save-progress">Guardar progreso</button>
-        <button id="load-progress">Cargar progreso</button>
-        <!-- Input oculto para cargar progreso (.json) -->
-        <input type="file" id="file-input" accept=".json" style="display:none">
+    <header class="main-header">
+        <button id="open-sidebar" aria-label="Abrir menú">&#9776;</button>
+        <span id="collection-title">Colección</span>
+    </header>
 
-        <button id="load-csv-button">Cargar Nuevo CSV</button>
-        <!-- Input oculto para cargar nuevo CSV -->
-        <input type="file" id="csv-file-input" accept=".csv" style="display:none">
+    <aside id="sidebar" class="sidebar">
+        <button id="close-sidebar" class="close-sidebar" aria-label="Cerrar menú">&times;</button>
+        <div class="menu-section">
+            <a href="/" id="home-link">Inicio</a>
+            <button id="change-collection-button">Cambiar colección</button>
+        </div>
+        <div class="menu-section">
+            <button id="save-progress">Guardar progreso</button>
+            <button id="load-progress">Cargar progreso</button>
+            <input type="file" id="file-input" accept=".json" style="display:none">
 
-        <button id="change-collection-button">Cambiar colección</button>
+            <button id="load-csv-button">Cargar CSV</button>
+            <input type="file" id="csv-file-input" accept=".csv" style="display:none">
 
-        <button id="reset-progress-button">Reiniciar Progreso</button>
-        <button id="config-button">Configuración</button>
-    </div>
+            <button id="reset-progress-button">Reiniciar Progreso</button>
+        </div>
+        <div class="menu-section">
+            <button id="config-button">Configuración</button>
+            <button id="login-button">Iniciar sesión</button>
+        </div>
+    </aside>
     <div class="quiz-container">
         <div id="quiz"></div>
         <!-- Elemento para mostrar mensajes de estado (opcional) -->
