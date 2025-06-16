@@ -39,6 +39,17 @@ let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
 
+let loginEmailInput = null;
+let loginPasswordInput = null;
+let loginButtonEl = null;
+let logoutButtonEl = null;
+let sessionInfoDiv = null;
+let loginFormDiv = null;
+let loggedUserSpan = null;
+let currentUser = null;
+let currentCollectionId = null;
+let lastLocalUpdatedAt = 0;
+
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
 let questionVisibleStartTime = null;
@@ -87,6 +98,14 @@ document.addEventListener('DOMContentLoaded', function() {
     collectionModal = document.getElementById('collection-modal');
     confirmCollectionButton = document.getElementById('confirm-collection-button');
 
+    loginEmailInput = document.getElementById('login-email');
+    loginPasswordInput = document.getElementById('login-password');
+    loginButtonEl = document.getElementById('login-button');
+    logoutButtonEl = document.getElementById('logout-button');
+    sessionInfoDiv = document.getElementById('session-info');
+    loginFormDiv = document.getElementById('login-form');
+    loggedUserSpan = document.getElementById('logged-user');
+
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
     configModalOverlay = document.getElementById('config-modal-overlay');
@@ -102,7 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
+        !loginEmailInput || !loginPasswordInput || !loginButtonEl || !logoutButtonEl || !sessionInfoDiv || !loginFormDiv || !loggedUserSpan) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -113,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    checkAuthStatus();
     loadCollections();
 
     window.addEventListener('beforeunload', saveState);
@@ -137,6 +158,9 @@ function setupEventListeners() {
     collectionModalOverlay?.addEventListener('click', function(event){
         if(event.target === collectionModalOverlay) closeCollectionModal();
     });
+
+    loginButtonEl?.addEventListener('click', handleLogin);
+    logoutButtonEl?.addEventListener('click', handleLogout);
 
     // Botones y overlay del modal de configuración
     saveConfigButton?.addEventListener('click', handleSaveConfig);
@@ -246,6 +270,7 @@ async function loadCollections() {
 }
 
 async function loadQuestionsFromCollection(id) {
+    currentCollectionId = id;
     showStatusMessage('Cargando preguntas...', 'info');
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/preguntas?select=*&coleccion_id=eq.${id}`, {
@@ -269,6 +294,9 @@ async function loadQuestionsFromCollection(id) {
             });
         });
         totalQuestions = questions.length;
+        if (currentUser) {
+            await reconcileProgress(id);
+        }
         if (questions.length > 0) {
             initializeQuiz();
             hideStatusMessage();
@@ -287,6 +315,7 @@ function handleCollectionChange() {
 
 function openCollectionModal() {
     updateUrlForCollection(null, true);
+    currentCollectionId = null;
     if (collectionModalOverlay) collectionModalOverlay.classList.remove('hidden');
 }
 
@@ -299,6 +328,7 @@ function confirmCollectionSelection() {
     if (id !== 'custom') {
         localStorage.setItem(COLLECTION_STORAGE_KEY, id);
         updateUrlForCollection(id);
+        currentCollectionId = id;
         loadQuestionsFromCollection(id);
     } else {
         localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
@@ -1245,10 +1275,14 @@ function saveState() {
         questionStats: questionStats,
         questionQueue: queueToSave,
         avgTimePerRep: avgTimePerRep,
-        initialTotalRepetitions: initialTotalRepetitions
+        initialTotalRepetitions: initialTotalRepetitions,
+        updatedAt: Date.now()
     };
     try {
         localStorage.setItem('quizState', JSON.stringify(state));
+        if (currentUser && currentCollectionId) {
+            saveProgressToDB(currentCollectionId, state);
+        }
     } catch (e) {
         console.error("Error al guardar estado en localStorage:", e);
         showStatusMessage("Error al guardar el progreso automáticamente.", "error");
@@ -1276,8 +1310,9 @@ function loadState() {
                         questionStats[key].avgTime = avgTimePerRep;
                     }
                 }
+                lastLocalUpdatedAt = state.updatedAt || 0;
                 console.log("Estado cargado desde localStorage.");
-                return true;
+                return state;
             } else {
                 console.warn("Estado en localStorage inválido. Ignorando.");
                 clearState();
@@ -1290,12 +1325,21 @@ function loadState() {
      questionStats = {};
      questionQueue = [];
      currentQuestionIndex = null;
-     return false;
+     return null;
 }
 
 function clearState() {
     localStorage.removeItem('quizState');
     console.log("Estado de localStorage limpiado.");
+}
+
+function getLocalState() {
+    try {
+        const json = localStorage.getItem('quizState');
+        return json ? JSON.parse(json) : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 function resetQuizState(preserveLocalStorage = false) {
@@ -1315,6 +1359,93 @@ function resetQuizState(preserveLocalStorage = false) {
         quizContainerDiv.classList.remove('correct-answer-border', 'incorrect-answer-border');
     }
     console.log("Estado completo del quiz reiniciado.");
+}
+
+async function saveProgressToDB(coleccionId, state) {
+    if (!currentUser) return;
+    try {
+        await supabase.from('progress').upsert({
+            user_id: currentUser.id,
+            coleccion_id: coleccionId,
+            question_stats: state.questionStats,
+            question_queue: state.questionQueue,
+            avg_time_per_rep: state.avgTimePerRep,
+            initial_total_reps: state.initialTotalRepetitions
+        }, { onConflict: 'user_id,coleccion_id' });
+    } catch (e) {
+        console.error('Error guardando progreso', e);
+    }
+}
+
+async function loadProgressFromDB(coleccionId) {
+    if (!currentUser) return null;
+    const { data, error } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('coleccion_id', coleccionId)
+        .single();
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error cargando progreso', error);
+        return null;
+    }
+    return data;
+}
+
+function applyState(stateObj) {
+    if (!stateObj) return;
+    questionStats = stateObj.questionStats || {};
+    questionQueue = stateObj.questionQueue || [];
+    avgTimePerRep = typeof stateObj.avgTimePerRep === 'number' ? stateObj.avgTimePerRep : avgTimePerRep;
+    initialTotalRepetitions = typeof stateObj.initialTotalRepetitions === 'number' ? stateObj.initialTotalRepetitions : getTotalRepetitionsRemaining();
+    currentQuestionIndex = null;
+    lastLocalUpdatedAt = stateObj.updatedAt || Date.now();
+    localStorage.setItem('quizState', JSON.stringify(stateObj));
+}
+
+async function reconcileProgress(coleccionId) {
+    const local = getLocalState();
+    const localTime = local?.updatedAt || 0;
+    const cloudRow = await loadProgressFromDB(coleccionId);
+    const cloudTime = cloudRow ? new Date(cloudRow.updated_at).getTime() : 0;
+
+    if (!cloudRow && local) {
+        await saveProgressToDB(coleccionId, local);
+    } else if (cloudRow && !local) {
+        applyState({
+            questionStats: cloudRow.question_stats,
+            questionQueue: cloudRow.question_queue,
+            avgTimePerRep: cloudRow.avg_time_per_rep,
+            initialTotalRepetitions: cloudRow.initial_total_reps,
+            updatedAt: cloudTime
+        });
+    } else if (cloudRow && local) {
+        if (localTime > cloudTime) {
+            if (confirm('Tienes un progreso más reciente localmente. ¿Subirlo?')) {
+                await saveProgressToDB(coleccionId, local);
+            } else {
+                applyState({
+                    questionStats: cloudRow.question_stats,
+                    questionQueue: cloudRow.question_queue,
+                    avgTimePerRep: cloudRow.avg_time_per_rep,
+                    initialTotalRepetitions: cloudRow.initial_total_reps,
+                    updatedAt: cloudTime
+                });
+            }
+        } else if (cloudTime > localTime) {
+            if (confirm('Hay un progreso más reciente en la nube. ¿Usarlo?')) {
+                applyState({
+                    questionStats: cloudRow.question_stats,
+                    questionQueue: cloudRow.question_queue,
+                    avgTimePerRep: cloudRow.avg_time_per_rep,
+                    initialTotalRepetitions: cloudRow.initial_total_reps,
+                    updatedAt: cloudTime
+                });
+            } else {
+                await saveProgressToDB(coleccionId, local);
+            }
+        }
+    }
 }
 
 // --- Manejadores de Botones de Control ---
@@ -1438,6 +1569,7 @@ function handleCsvFileSelect(event) {
                 collectionSelect.value = 'custom';
                 localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
                 updateUrlForCollection('custom');
+                currentCollectionId = null;
             }
         }
     };
@@ -1584,6 +1716,53 @@ function handleSaveConfig() {
     }
 
     closeConfigModal();
+}
+
+async function checkAuthStatus() {
+    const { data: { session } } = await supabase.auth.getSession();
+    currentUser = session ? session.user : null;
+    updateLoginUI();
+}
+
+function updateLoginUI() {
+    if (currentUser) {
+        loginFormDiv.classList.add('hidden');
+        sessionInfoDiv.classList.remove('hidden');
+        loggedUserSpan.textContent = currentUser.email;
+    } else {
+        sessionInfoDiv.classList.add('hidden');
+        loginFormDiv.classList.remove('hidden');
+        loggedUserSpan.textContent = '';
+    }
+}
+
+async function handleLogin() {
+    const email = loginEmailInput.value.trim();
+    const password = loginPasswordInput.value;
+    if (!email || !password) {
+        showStatusMessage('Ingresa correo y contraseña', 'error');
+        return;
+    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+        showStatusMessage('Error al iniciar sesión', 'error');
+        console.error(error);
+        return;
+    }
+    currentUser = data.user;
+    updateLoginUI();
+    showStatusMessage('Sesión iniciada', 'success');
+    if (currentCollectionId) {
+        await reconcileProgress(currentCollectionId);
+        initializeQuiz();
+    }
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut();
+    currentUser = null;
+    updateLoginUI();
+    showStatusMessage('Sesión cerrada', 'info');
 }
 
 function applyTheme(mode) {

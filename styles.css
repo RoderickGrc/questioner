@@ -570,6 +570,8 @@ body {
 
 .config-option input[type="number"],
 .config-option input[type="text"],
+.config-option input[type="email"],
+.config-option input[type="password"],
 .config-option select {
     width: 100%;
     padding: 0.6rem;
