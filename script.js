@@ -38,6 +38,7 @@ let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
+let loginButton = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     collectionModalOverlay = document.getElementById('collection-modal-overlay');
     collectionModal = document.getElementById('collection-modal');
     confirmCollectionButton = document.getElementById('confirm-collection-button');
+    loginButton = document.getElementById('login-button');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton || !loginButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -113,6 +115,16 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabase.auth.getSession().then(({ data }) => {
+        updateLoginUI(data.session ? data.session.user : null);
+    });
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+        updateLoginUI(session ? session.user : null);
+        if (session) {
+            await loadStateFromSupabase();
+            showNextQuestion();
+        }
+    });
     loadCollections();
 
     window.addEventListener('beforeunload', saveState);
@@ -147,36 +159,35 @@ function setupEventListeners() {
             closeConfigModal();
         }
     });
+
+    loginButton?.addEventListener('click', handleLoginLogout);
 }
 
 // --- Carga de Datos (CSV y Estado) ---
 
-function loadInitialCSV(filePath) {
+async function loadInitialCSV(filePath) {
     showStatusMessage("Cargando preguntas...", "info");
-    fetch(filePath)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.text();
-        })
-        .then(data => {
-            resetQuizState(true); // Limpiar estado en memoria pero conservar localStorage
-            parseCSV(data);
-            if (questions.length > 0) {
-                initializeQuiz();
-                hideStatusMessage();
-            } else {
-                showStatusMessage("Error: El archivo CSV está vacío o no contiene preguntas válidas.", "error");
-                 if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border'); // Indicar error visualmente
-            }
-        })
-        .catch(error => {
-            console.error('Error al cargar el archivo CSV inicial:', error);
-            showStatusMessage(`Error al cargar ${filePath}: ${error.message}. Asegúrate de que el archivo existe y es accesible.`, "error");
-            quizDiv.innerHTML = `<p class='error-message'>No se pudieron cargar las preguntas iniciales.</p>`;
-             if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border'); // Indicar error visualmente
-        });
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+            throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.text();
+        resetQuizState(true); // Limpiar estado en memoria pero conservar localStorage
+        parseCSV(data);
+        if (questions.length > 0) {
+            await initializeQuiz();
+            hideStatusMessage();
+        } else {
+            showStatusMessage("Error: El archivo CSV está vacío o no contiene preguntas válidas.", "error");
+            if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border');
+        }
+    } catch (error) {
+        console.error('Error al cargar el archivo CSV inicial:', error);
+        showStatusMessage(`Error al cargar ${filePath}: ${error.message}. Asegúrate de que el archivo existe y es accesible.`, "error");
+        quizDiv.innerHTML = `<p class='error-message'>No se pudieron cargar las preguntas iniciales.</p>`;
+        if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border');
+    }
 }
 
 async function loadCollections() {
@@ -270,7 +281,7 @@ async function loadQuestionsFromCollection(id) {
         });
         totalQuestions = questions.length;
         if (questions.length > 0) {
-            initializeQuiz();
+            await initializeQuiz();
             hideStatusMessage();
         } else {
             showStatusMessage('La colección seleccionada no tiene preguntas.', 'error');
@@ -364,8 +375,9 @@ function parseCSV(data) {
 
 // --- Lógica del Quiz ---
 
-function initializeQuiz() {
+async function initializeQuiz() {
     loadState(); // Intentar cargar estado guardado (localStorage o archivo)
+    await loadStateFromSupabase();
 
     let statsNeedInitialization = !questionStats || Object.keys(questionStats).length === 0;
 
@@ -1253,6 +1265,7 @@ function saveState() {
         console.error("Error al guardar estado en localStorage:", e);
         showStatusMessage("Error al guardar el progreso automáticamente.", "error");
     }
+    saveStateToSupabase();
 }
 
 function loadState() {
@@ -1590,4 +1603,61 @@ function applyTheme(mode) {
     if (mode !== 'dark' && mode !== 'light') return;
     themeMode = mode;
     document.body.classList.toggle('dark-mode', mode === 'dark');
+}
+
+function updateLoginUI(user) {
+    if (!loginButton) return;
+    loginButton.textContent = user ? 'Cerrar sesión' : 'Iniciar sesión';
+}
+
+async function handleLoginLogout() {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+        await supabase.auth.signOut();
+    } else {
+        await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.href } });
+    }
+}
+
+async function saveStateToSupabase() {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return;
+    const col = collectionSelect?.value;
+    if (!col || col === 'custom') return;
+    const queueToSave = currentQuestionIndex !== null && currentQuestionIndex !== undefined ? [currentQuestionIndex, ...questionQueue] : [...questionQueue];
+    const { error } = await supabase.from('progress').upsert({
+        user_id: data.session.user.id,
+        coleccion_id: col,
+        question_stats: questionStats,
+        question_queue: queueToSave,
+        avg_time_per_rep: avgTimePerRep,
+        initial_total_reps: initialTotalRepetitions
+    });
+    if (error) console.error('Error guardando progreso en Supabase:', error);
+}
+
+async function loadStateFromSupabase() {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return false;
+    const col = collectionSelect?.value;
+    if (!col || col === 'custom') return false;
+    const { data: progress, error } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('user_id', data.session.user.id)
+        .eq('coleccion_id', col)
+        .maybeSingle();
+    if (error) {
+        if (error.code !== 'PGRST116') console.error('Error obteniendo progreso de Supabase:', error);
+        return false;
+    }
+    if (progress) {
+        questionStats = progress.question_stats || {};
+        questionQueue = progress.question_queue || [];
+        if (typeof progress.avg_time_per_rep === 'number') avgTimePerRep = progress.avg_time_per_rep;
+        if (typeof progress.initial_total_reps === 'number') initialTotalRepetitions = progress.initial_total_reps;
+        currentQuestionIndex = null;
+        return true;
+    }
+    return false;
 }

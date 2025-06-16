@@ -131,6 +131,10 @@ body {
     flex-basis: auto; /* Tamaño basado en contenido */
 }
 
+#login-button {
+    margin-left: auto;
+}
+
 
 .modal-content select {
     padding: 0.55em 0.8em;
