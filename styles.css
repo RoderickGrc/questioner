@@ -104,33 +104,77 @@ body {
     min-height: 100vh; /* Asegura que el cuerpo ocupe al menos toda la altura de la vista */
 }
 
-#progress-buttons {
+#side-menu-buttons {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    padding: 2px 15px;
-    /* background-color: #343a40; */ /* Darker menu background */
-    color: black;
-    width: 100%;
-    /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */
-    /* position: sticky; top: 0; z-index: 100; */ /* Opción para menú pegajoso */
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
 }
 
-#progress-buttons button {
-    padding: 0.6em 1em;
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6em 0.8em;
     cursor: pointer;
+    background-color: transparent;
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.menu-item:hover {
+    background-color: var(--option-hover-bg);
+}
+
+.menu-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+#menu-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1100;
     background-color: #007bff;
     color: #000;
     border: none;
     border-radius: 4px;
-    font-size: 0.9rem; /* Relativo al font-size de html */
-    transition: background-color 0.2s ease;
-    flex-grow: 0; /* No crecer para llenar espacio por defecto */
-    flex-shrink: 0; /* No encogerse por defecto */
-    flex-basis: auto; /* Tamaño basado en contenido */
+    padding: 0.5em 0.7em;
+    cursor: pointer;
 }
 
+#menu-toggle:hover {
+    background-color: #0056b3;
+}
+
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    height: 100%;
+    background-color: var(--container-bg);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1050;
+    overflow-y: auto;
+}
+
+.side-menu.open {
+    transform: translateX(0);
+}
+
+#side-menu #side-menu-buttons {
+    flex-direction: column;
+    align-items: stretch;
+}
 
 .modal-content select {
     padding: 0.55em 0.8em;
@@ -141,9 +185,6 @@ body {
     font-size: 0.9rem;
 }
 
-#progress-buttons button:hover {
-    background-color: #0056b3;
-}
 
 .quiz-container {
     background-color: var(--container-bg);
@@ -410,7 +451,7 @@ body {
         margin: 1.25rem auto;
     }
     #quiz h2 { font-size: 1.3rem; }
-    #progress-buttons button { font-size: 0.85rem; padding: 0.5em 0.8em; }
+    .menu-item { font-size: 0.85rem; padding: 0.5em 0.8em; }
     .modal-content select { font-size: 0.85rem; padding: 0.45em 0.7em; }
 }
 
@@ -419,15 +460,9 @@ body {
         font-size: 14px; /* Aumentar ligeramente la base para móviles para que no sea tan pequeño */
                          /* El valor original era 14px, si se sigue viendo pequeño, probar con 15px o 16px */
     }
-    #progress-buttons {
-        padding: 10px 8px;
-        gap: 8px;
-    }
-    #progress-buttons button {
+    .menu-item {
         font-size: 0.85rem; /* Ajustar según necesidad */
         padding: 0.5em 0.7em;
-        flex-grow: 1; /* Permite que los botones se expandan un poco */
-        flex-basis: calc(50% - 4px); /* Dos botones por línea */
     }
 
     .quiz-container {
