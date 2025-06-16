@@ -316,12 +316,16 @@ function openSidebar() {
     sidebar?.classList.add('open');
     document.body.classList.add('sidebar-open');
     document.addEventListener('click', handleDocumentClick);
+    openSidebarButton?.classList.add('hidden');
+    closeSidebarButton?.classList.remove('hidden');
 }
 
 function closeSidebar() {
     sidebar?.classList.remove('open');
     document.body.classList.remove('sidebar-open');
     document.removeEventListener('click', handleDocumentClick);
+    openSidebarButton?.classList.remove('hidden');
+    closeSidebarButton?.classList.add('hidden');
 }
 
 function handleDocumentClick(event) {
