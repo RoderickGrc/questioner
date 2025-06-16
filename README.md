@@ -15,6 +15,7 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 - **Modo claro u oscuro** seleccionable desde la configuración.
 - **Texto de botones negro** para asegurar contraste en ambos temas.
 - **Banner de error en preguntas múltiples** que resalta aciertos parciales en amarillo.
+- **Las colecciones muestran también su materia** tanto en el encabezado como en la lista de selección.
 
 ## Uso rápido
 

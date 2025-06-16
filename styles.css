@@ -805,3 +805,9 @@ body.sidebar-open #open-sidebar {
     display: block;
     margin-bottom: 0.5rem;
 }
+
+.collection-subject-header {
+    font-weight: bold;
+    color: var(--subject-color);
+    margin-right: 0.25rem;
+}

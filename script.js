@@ -44,6 +44,8 @@ let sidebar = null;
 let openSidebarButton = null;
 let closeSidebarButton = null;
 let collectionTitleSpan = null;
+let collectionSubjectSpan = null;
+let collectionNameSpan = null;
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -139,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
     openSidebarButton = document.getElementById('open-sidebar');
     closeSidebarButton = document.getElementById('close-sidebar');
     collectionTitleSpan = document.getElementById('collection-title');
+    collectionSubjectSpan = document.getElementById('collection-subject');
+    collectionNameSpan = document.getElementById('collection-name');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -156,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton ||
-        !sidebar || !openSidebarButton || !closeSidebarButton || !collectionTitleSpan || !homeContainer || !homeCarousel) {
+        !sidebar || !openSidebarButton || !closeSidebarButton || !collectionTitleSpan || !collectionSubjectSpan || !collectionNameSpan || !homeContainer || !homeCarousel) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -258,7 +262,7 @@ async function loadCollections() {
         availableCollections.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
-            opt.textContent = c.nombre;
+            opt.textContent = c.materia ? `${c.materia} | ${c.nombre}` : c.nombre;
             collectionSelect.appendChild(opt);
         });
         customOption = document.createElement('option');
@@ -392,12 +396,19 @@ function handleDocumentClick(event) {
 }
 
 function updateCollectionTitleById(id) {
-    if (!collectionTitleSpan) return;
+    if (!collectionSubjectSpan || !collectionNameSpan) return;
     if (id === 'custom') {
-        collectionTitleSpan.textContent = 'Personalizado';
+        collectionSubjectSpan.textContent = '';
+        collectionNameSpan.textContent = 'Personalizado';
     } else {
         const col = availableCollections.find(c => c.id === id);
-        collectionTitleSpan.textContent = col ? col.nombre : 'Colección';
+        if (col) {
+            collectionSubjectSpan.textContent = col.materia ? col.materia : '';
+            collectionNameSpan.textContent = col.nombre;
+        } else {
+            collectionSubjectSpan.textContent = '';
+            collectionNameSpan.textContent = 'Colección';
+        }
     }
 }
 
