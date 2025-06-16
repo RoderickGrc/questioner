@@ -765,3 +765,75 @@ body.sidebar-open #open-sidebar {
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
+/* --- Estilos para la página de inicio --- */
+.home-page {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.home-header {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.carousel-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    overflow: hidden;
+    padding: 1rem 0;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 1rem;
+    scroll-behavior: smooth;
+}
+
+.collection-card {
+    flex: 0 0 80%;
+    max-width: 300px;
+    scroll-snap-align: start;
+    background-color: var(--container-bg);
+    border: 1px solid var(--option-border);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+}
+
+.collection-card .collection-materia {
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.3rem;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#carousel-prev { left: 10px; }
+#carousel-next { right: 10px; }
+
