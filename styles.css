@@ -131,6 +131,15 @@ body {
     flex-basis: auto; /* Tamaño basado en contenido */
 }
 
+#progress-buttons select {
+    padding: 0.55em 0.8em;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
 #progress-buttons button:hover {
     background-color: #0056b3;
 }
@@ -401,6 +410,7 @@ body {
     }
     #quiz h2 { font-size: 1.3rem; }
     #progress-buttons button { font-size: 0.85rem; padding: 0.5em 0.8em; }
+    #progress-buttons select { font-size: 0.85rem; padding: 0.45em 0.7em; }
 }
 
 @media (max-width: 480px) { /* Móviles en portrait */

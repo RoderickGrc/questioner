@@ -26,6 +26,7 @@ let quizDiv = null;
 let statusMessageDiv = null;
 let fileInput = null;
 let csvFileInput = null;
+let collectionSelect = null;
 let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
@@ -43,6 +44,10 @@ let autosaveIntervalId = null;
 
 let themeMode = 'dark';
 
+const SUPABASE_URL = 'https://infuklajuugncqkarlnp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZnVrbGFqdXVnbmNxa2FybG5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNTIwNzMsImV4cCI6MjA2NTYyODA3M30.-rb8x3G7T0FN6U2GMz1LD_tulNFG9jKyvdv5iDoDidg';
+let supabase = null;
+
 // --- Inicialización ---
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -55,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     timeProgressDiv = document.getElementById('time-progress');
     timeBarDiv = document.getElementById('time-bar');
     timeRemainingSpan = document.getElementById('time-remaining');
+    collectionSelect = document.getElementById('collection-select');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -68,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeModalXButton = document.getElementById('close-modal-x');
 
     if (!quizDiv || !statusMessageDiv || !fileInput || !csvFileInput || !quizContainerDiv ||
-        !timeProgressDiv || !timeBarDiv || !timeRemainingSpan ||
+        !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
         !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
@@ -80,7 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
     applyTheme(themeMode); // Aplicar el tema al iniciar
     setupEventListeners(); // Configurar listeners de botones generales y del modal
 
-    loadInitialCSV('questions.csv'); // Cargar el CSV inicial
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    loadCollections();
 
     window.addEventListener('beforeunload', saveState);
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -98,6 +105,7 @@ function setupEventListeners() {
     // Inputs de archivo
     fileInput.addEventListener('change', handleProgressFileSelect);
     csvFileInput.addEventListener('change', handleCsvFileSelect);
+    collectionSelect.addEventListener('change', handleCollectionChange);
 
     // Botones y overlay del modal de configuración
     saveConfigButton?.addEventListener('click', handleSaveConfig);
@@ -138,6 +146,79 @@ function loadInitialCSV(filePath) {
             quizDiv.innerHTML = `<p class='error-message'>No se pudieron cargar las preguntas iniciales.</p>`;
              if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border'); // Indicar error visualmente
         });
+}
+
+async function loadCollections() {
+    showStatusMessage('Cargando colecciones...', 'info');
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/colecciones?select=*`, {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        const data = await res.json();
+        collectionSelect.innerHTML = '';
+        data.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nombre;
+            collectionSelect.appendChild(opt);
+        });
+        const customOpt = document.createElement('option');
+        customOpt.value = 'custom';
+        customOpt.textContent = 'Personalizado';
+        collectionSelect.appendChild(customOpt);
+        if (data.length > 0) {
+            collectionSelect.value = data[0].id;
+            await loadQuestionsFromCollection(data[0].id);
+        }
+    } catch (e) {
+        console.error('Error al cargar colecciones:', e);
+        showStatusMessage('Error al cargar colecciones', 'error');
+    }
+}
+
+async function loadQuestionsFromCollection(id) {
+    showStatusMessage('Cargando preguntas...', 'info');
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/preguntas?select=*&coleccion_id=eq.${id}`, {
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        const data = await res.json();
+        resetQuizState(true);
+        data.forEach(row => {
+            const correct = [row.opcion_correcta_1, row.opcion_correcta_2, row.opcion_correcta_3].filter(Boolean);
+            const incorrect = [row.opcion_incorrecta_1, row.opcion_incorrecta_2, row.opcion_incorrecta_3].filter(Boolean);
+            const isWritten = correct.length === 1 && incorrect.length === 0;
+            questions.push({
+                pregunta: row.pregunta,
+                correctAnswers: correct,
+                incorrectAnswers: incorrect,
+                explicacion: row.explicacion || '',
+                isWritten: isWritten
+            });
+        });
+        totalQuestions = questions.length;
+        if (questions.length > 0) {
+            initializeQuiz();
+            hideStatusMessage();
+        } else {
+            showStatusMessage('La colección seleccionada no tiene preguntas.', 'error');
+        }
+    } catch (e) {
+        console.error('Error al cargar preguntas de Supabase:', e);
+        showStatusMessage('Error al cargar preguntas.', 'error');
+    }
+}
+
+function handleCollectionChange() {
+    const id = collectionSelect.value;
+    if (id === 'custom') return;
+    loadQuestionsFromCollection(id);
 }
 
 function parseCSV(data) {
@@ -1266,6 +1347,7 @@ function handleCsvFileSelect(event) {
              if (quizContainerDiv) quizContainerDiv.classList.add('incorrect-answer-border'); // Indicar error visual
         } finally {
             csvFileInput.value = "";
+            if (collectionSelect) collectionSelect.value = 'custom';
         }
     };
     reader.onerror = function() {

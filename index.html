@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
     <!-- Botones de control en la parte superior -->
@@ -19,6 +20,9 @@
         <button id="load-csv-button">Cargar Nuevo CSV</button>
         <!-- Input oculto para cargar nuevo CSV -->
         <input type="file" id="csv-file-input" accept=".csv" style="display:none">
+
+        <label for="collection-select">Colección:</label>
+        <select id="collection-select"></select>
 
         <button id="reset-progress-button">Reiniciar Progreso</button>
         <button id="config-button">Configuración</button>
