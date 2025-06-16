@@ -113,7 +113,7 @@ body {
     background-color: var(--container-bg);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: relative;
-    z-index: 101;
+    z-index: 99;
 }
 
 #open-sidebar {
@@ -145,6 +145,13 @@ body {
 
 .sidebar.open {
     transform: translateX(0);
+}
+
+/* Desplazar el encabezado cuando el sidebar está abierto en pantallas grandes */
+@media (min-width: 769px) {
+    body.sidebar-open .main-header {
+        transform: translateX(240px);
+    }
 }
 
 .sidebar .menu-section {

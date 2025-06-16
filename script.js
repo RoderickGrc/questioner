@@ -314,12 +314,23 @@ function closeCollectionModal() {
 
 function openSidebar() {
     sidebar?.classList.add('open');
-    openSidebarButton?.classList.add('hidden');
+    document.body.classList.add('sidebar-open');
+    document.addEventListener('click', handleDocumentClick);
 }
 
 function closeSidebar() {
     sidebar?.classList.remove('open');
-    openSidebarButton?.classList.remove('hidden');
+    document.body.classList.remove('sidebar-open');
+    document.removeEventListener('click', handleDocumentClick);
+}
+
+function handleDocumentClick(event) {
+    if (!sidebar?.classList.contains('open')) return;
+    if (window.innerWidth > 768) return;
+    if (sidebar.contains(event.target) || openSidebarButton.contains(event.target)) {
+        return;
+    }
+    closeSidebar();
 }
 
 function updateCollectionTitleById(id) {
