@@ -705,3 +705,40 @@ body {
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
+/* --- Home Page --- */
+.home-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    text-align: center;
+    padding: 1rem;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.collections-list {
+    list-style: none;
+    padding: 0;
+}
+
+.collections-list li {
+    margin: 0.5rem 0;
+}
+
+.collections-list a {
+    color: var(--text-color);
+    text-decoration: none;
+    border: 1px solid var(--option-border);
+    background: var(--option-bg);
+    padding: 0.5rem 1rem;
+    display: block;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.collections-list a:hover {
+    background: var(--option-hover-bg);
+}

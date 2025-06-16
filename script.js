@@ -39,14 +39,7 @@ let timeProgressDiv = null;
 let timeBarDiv = null;
 let timeRemainingSpan = null;
 let loginButton = null;
-let loginModalOverlay = null;
-let loginModal = null;
-let loginEmailInput = null;
-let loginPasswordInput = null;
-let loginSubmitButton = null;
-let registerSubmitButton = null;
-let closeLoginModalButton = null;
-let loginErrorMessage = null;
+
 
 let initialTotalRepetitions = 0;
 let questionStartTime = null;
@@ -96,14 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
     collectionModal = document.getElementById('collection-modal');
     confirmCollectionButton = document.getElementById('confirm-collection-button');
     loginButton = document.getElementById('login-button');
-    loginModalOverlay = document.getElementById('login-modal-overlay');
-    loginModal = document.getElementById('login-modal');
-    loginEmailInput = document.getElementById('login-email');
-    loginPasswordInput = document.getElementById('login-password');
-    loginSubmitButton = document.getElementById('login-submit-button');
-    registerSubmitButton = document.getElementById('register-submit-button');
-    closeLoginModalButton = document.getElementById('close-login-modal-button');
-    loginErrorMessage = document.getElementById('login-error-message');
 
     // Referencias para el modal de configuración
     configButton = document.getElementById('config-button');
@@ -120,8 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         !timeProgressDiv || !timeBarDiv || !timeRemainingSpan || !collectionSelect ||
         !changeCollectionButton || !collectionModalOverlay || !collectionModal || !confirmCollectionButton ||
         !configButton || !configModalOverlay || !configModal || !configRepsOnErrorInput ||
-        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton || !loginButton ||
-        !loginModalOverlay || !loginModal || !loginEmailInput || !loginPasswordInput || !loginSubmitButton || !registerSubmitButton || !closeLoginModalButton || !loginErrorMessage) {
+        !configInitialRepsInput || !configThemeSelect || !saveConfigButton || !closeModalButton || !closeModalXButton || !loginButton) {
         console.error("Error: No se encontraron elementos esenciales del DOM (quiz, status, inputs, o elementos del modal).");
         if(quizDiv) quizDiv.innerHTML = "<p class='error-message'>Error crítico: Faltan elementos HTML esenciales para el quiz o la configuración.</p>";
         return;
@@ -178,12 +162,6 @@ function setupEventListeners() {
     });
 
     loginButton?.addEventListener('click', handleLoginLogout);
-    loginSubmitButton?.addEventListener('click', submitLogin);
-    registerSubmitButton?.addEventListener('click', submitRegister);
-    closeLoginModalButton?.addEventListener('click', closeLoginModal);
-    loginModalOverlay?.addEventListener('click', function(event) {
-        if (event.target === loginModalOverlay) closeLoginModal();
-    });
 }
 
 // --- Carga de Datos (CSV y Estado) ---
@@ -1638,40 +1616,7 @@ async function handleLoginLogout() {
     if (data.session) {
         await supabase.auth.signOut();
     } else {
-        openLoginModal();
-    }
-}
-
-function openLoginModal() {
-    if (loginModalOverlay) loginModalOverlay.classList.remove('hidden');
-    if (loginErrorMessage) loginErrorMessage.textContent = '';
-}
-
-function closeLoginModal() {
-    if (loginModalOverlay) loginModalOverlay.classList.add('hidden');
-}
-
-async function submitLogin() {
-    if (!loginEmailInput || !loginPasswordInput) return;
-    const email = loginEmailInput.value.trim();
-    const password = loginPasswordInput.value.trim();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-        if (loginErrorMessage) loginErrorMessage.textContent = error.message;
-    } else {
-        closeLoginModal();
-    }
-}
-
-async function submitRegister() {
-    if (!loginEmailInput || !loginPasswordInput) return;
-    const email = loginEmailInput.value.trim();
-    const password = loginPasswordInput.value.trim();
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-        if (loginErrorMessage) loginErrorMessage.textContent = error.message;
-    } else {
-        closeLoginModal();
+        window.location.href = '/login.html';
     }
 }
 
