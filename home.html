@@ -1,0 +1,38 @@
+<!-- home.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <base href="/">
+    <title>Inicio - Quiz Interactivo</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <button id="open-sidebar" class="sidebar-toggle" aria-label="Abrir menú">&#9776;</button>
+        <span id="collection-title">Colección</span>
+    </header>
+
+    <aside id="sidebar" class="sidebar">
+        <button id="close-sidebar" class="sidebar-toggle close-sidebar" aria-label="Cerrar menú">&#9776;</button>
+        <div class="menu-section">
+            <a href="home.html" id="home-link">Inicio</a>
+            <a href="quiz.html" id="start-quiz-link">Comenzar Quiz</a>
+            <button id="change-collection-button">Cambiar colección</button>
+        </div>
+        <div class="menu-section">
+            <button id="config-button">Configuración</button>
+            <button id="login-button">Iniciar sesión</button>
+        </div>
+    </aside>
+
+    <main class="home-main">
+        <h1>¿Qué estudiaremos hoy?</h1>
+        <div id="collections-carousel" class="collections-carousel"></div>
+    </main>
+
+    <script src="home.js"></script>
+</body>
+</html>
