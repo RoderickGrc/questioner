@@ -32,6 +32,8 @@ let changeCollectionButton = null;
 let collectionModalOverlay = null;
 let collectionModal = null;
 let confirmCollectionButton = null;
+let customOption = null;
+let availableCollections = [];
 let quizContainerDiv = null; // <-- NUEVO: Referencia al contenedor principal
 let timeProgressDiv = null;
 let timeBarDiv = null;
@@ -52,6 +54,20 @@ let themeMode = 'dark';
 const SUPABASE_URL = 'https://infuklajuugncqkarlnp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZnVrbGFqdXVnbmNxa2FybG5wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNTIwNzMsImV4cCI6MjA2NTYyODA3M30.-rb8x3G7T0FN6U2GMz1LD_tulNFG9jKyvdv5iDoDidg';
 let supabase = null;
+
+function getCollectionIdFromPath() {
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    return parts[0] === 'collections' ? (parts[1] || null) : null;
+}
+
+function updateUrlForCollection(id, replace = false) {
+    const url = id ? `/collections/${id}` : '/collections';
+    if (replace) {
+        history.replaceState(null, '', url);
+    } else {
+        history.pushState(null, '', url);
+    }
+}
 
 // --- Inicialización ---
 
@@ -173,8 +189,9 @@ async function loadCollections() {
             }
         });
         const data = await res.json();
+        availableCollections = data;
         collectionSelect.innerHTML = '';
-        data.forEach(c => {
+        availableCollections.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.id;
             opt.textContent = c.nombre;
@@ -187,17 +204,39 @@ async function loadCollections() {
         collectionSelect.appendChild(customOption);
 
         const saved = localStorage.getItem(COLLECTION_STORAGE_KEY);
-        if (saved && collectionSelect.querySelector(`option[value="${saved}"]`)) {
-            collectionSelect.value = saved;
-            if (saved !== 'custom') {
-                await loadQuestionsFromCollection(saved);
+        const pathId = getCollectionIdFromPath();
+
+        if (pathId) {
+            if (pathId === 'custom') {
+                if (!customOption.disabled && saved === 'custom') {
+                    collectionSelect.value = 'custom';
+                    updateUrlForCollection('custom', true);
+                } else {
+                    updateUrlForCollection(null, true);
+                    openCollectionModal();
+                }
+            } else if (availableCollections.some(c => c.id === pathId)) {
+                collectionSelect.value = pathId;
+                localStorage.setItem(COLLECTION_STORAGE_KEY, pathId);
+                updateUrlForCollection(pathId, true);
+                await loadQuestionsFromCollection(pathId);
+                return;
             } else {
+                updateUrlForCollection(null, true);
                 openCollectionModal();
             }
-        } else if (data.length > 0) {
-            collectionSelect.value = data[0].id;
+        } else if (saved && collectionSelect.querySelector(`option[value="${saved}"]`)) {
+            collectionSelect.value = saved;
+            updateUrlForCollection(saved, true);
+            if (saved !== 'custom') {
+                await loadQuestionsFromCollection(saved);
+            }
+        } else if (availableCollections.length > 0) {
+            collectionSelect.value = availableCollections[0].id;
+            updateUrlForCollection(null, true);
             openCollectionModal();
         } else {
+            updateUrlForCollection(null, true);
             openCollectionModal();
         }
     } catch (e) {
@@ -247,6 +286,7 @@ function handleCollectionChange() {
 }
 
 function openCollectionModal() {
+    updateUrlForCollection(null, true);
     if (collectionModalOverlay) collectionModalOverlay.classList.remove('hidden');
 }
 
@@ -258,7 +298,11 @@ function confirmCollectionSelection() {
     const id = collectionSelect.value;
     if (id !== 'custom') {
         localStorage.setItem(COLLECTION_STORAGE_KEY, id);
+        updateUrlForCollection(id);
         loadQuestionsFromCollection(id);
+    } else {
+        localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
+        updateUrlForCollection('custom');
     }
     closeCollectionModal();
 }
@@ -1393,6 +1437,7 @@ function handleCsvFileSelect(event) {
                 if (customOption) customOption.disabled = false;
                 collectionSelect.value = 'custom';
                 localStorage.setItem(COLLECTION_STORAGE_KEY, 'custom');
+                updateUrlForCollection('custom');
             }
         }
     };
