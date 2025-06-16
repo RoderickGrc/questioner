@@ -19,7 +19,7 @@
     <aside id="sidebar" class="sidebar">
         <button id="close-sidebar" class="sidebar-toggle close-sidebar" aria-label="Cerrar menú">&#9776;</button>
         <div class="menu-section">
-            <a href="/" id="home-link">Inicio</a>
+            <a href="/home" id="home-link">Inicio</a>
             <button id="change-collection-button">Cambiar colección</button>
         </div>
         <div class="menu-section">
@@ -37,6 +37,10 @@
             <button id="login-button">Iniciar sesión</button>
         </div>
     </aside>
+    <div id="home-container" class="home-container hidden">
+        <h1>¿Qué estudiaremos hoy?</h1>
+        <div id="home-carousel" class="home-carousel"></div>
+    </div>
     <div class="quiz-container">
         <div id="quiz"></div>
         <!-- Elemento para mostrar mensajes de estado (opcional) -->

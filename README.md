@@ -19,8 +19,9 @@ Este proyecto es un quiz interactivo implementado con HTML, CSS y JavaScript pur
 ## Uso rápido
 
 1. Clona el repositorio y abre `index.html` en un navegador web moderno.
-2. El quiz cargará por defecto el archivo `questions.csv` incluido en el repositorio.
-3. Utiliza los botones de la parte superior para:
+2. Al iniciar se muestra una pantalla de inicio accesible también en `/home` con las colecciones disponibles.
+3. El quiz cargará por defecto el archivo `questions.csv` incluido en el repositorio.
+4. Utiliza los botones de la parte superior para:
    - Guardar o cargar el progreso (archivo JSON).
    - Cargar un CSV diferente con tus propias preguntas.
    - Reiniciar el avance actual.
@@ -32,7 +33,7 @@ Si se desea utilizar un CSV propio, consulta `doc/prompt.md` para conocer el for
 
 ## Estructura del repositorio
 
-- `index.html` – vista principal del quiz.
+- `index.html` – página principal que muestra el home y el quiz.
 - `script.js` – lógica de funcionamiento y manejo de estado.
 - `styles.css` – estilos de la interfaz.
 - `questions.csv` – ejemplo de preguntas en formato CSV.
