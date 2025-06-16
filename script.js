@@ -1,8 +1,8 @@
 // script.js
 
 // --- Configuración del Quiz (valores por defecto) ---
-let configRepetitionsOnError = 1;
-let configInitialRepetitions = 3;
+let configRepetitionsOnError = 0;
+let configInitialRepetitions = 1;
 const QUIZ_CONFIG_KEY = 'interactiveQuizConfig'; // Clave para localStorage
 const COLLECTION_STORAGE_KEY = 'selectedCollectionId';
 
